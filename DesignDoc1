@@ -1,5 +1,9 @@
-7.
-Why is it fortunate that we did not ask you to implement priority donation for semaphores?
-8.
-A student proposes to solve the boats problem by use of a counter,AdultsOnOahu. Since this number isn't known initially, it will be started at zero,
-and incremented by each adult thread before they do anything else. Is this solution likely to work? Why or why not? 
+Group Thimbles
+6-23-15
+OS CSE150
+
+1.
+(5%, 5 lines) Implement KThread.join(). 
+Note that another thread does not have to call join(), but if it is called, it must be called only once. 
+The result of calling join() a second time on the same thread is undefined, even if the second caller is a different thread than the first caller.
+A thread must finish executing normally whether or not it is joined. 
