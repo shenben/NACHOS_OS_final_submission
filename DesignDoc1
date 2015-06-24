@@ -1,0 +1,5 @@
+7.
+Why is it fortunate that we did not ask you to implement priority donation for semaphores?
+8.
+A student proposes to solve the boats problem by use of a counter,AdultsOnOahu. Since this number isn't known initially, it will be started at zero,
+and incremented by each adult thread before they do anything else. Is this solution likely to work? Why or why not? 
