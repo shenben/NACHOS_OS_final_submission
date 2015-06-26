@@ -276,6 +276,24 @@ public class KThread {
 	Lib.debug(dbgThread, "Joining to thread: " + toString());
 
 	Lib.assertTrue(this != currentThread);
+	
+	/*
+	 * page 196 of OSed9 - "the so-called fork-join strategy" 
+	 * Here, the threads created by the parent
+		perform work concurrently, but the parent cannot continue until this work
+		has been completed. Once each thread has finished its work, it terminates
+		and joins with its parent. Only after all of the children have joined can the
+		parent resume execution.
+	 * 
+	 * sleep == wait queue
+	 * 
+	 * 1. Check for necessary conditions (child working)
+	 * 2. 
+	 * 3. 
+	 * 4.
+	 *   
+	 * 
+	 * */
 
     }
 
