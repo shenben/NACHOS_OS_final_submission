@@ -28,6 +28,7 @@ public class Alarm {
      */
     public void timerInterrupt() {
 	KThread.currentThread().yield();
+	
     }
 
     /**
