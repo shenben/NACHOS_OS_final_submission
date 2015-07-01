@@ -32,10 +32,13 @@ public class Condition2 {
      */
     public void sleep() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-
+	
 	conditionLock.release();
-
-	conditionLock.acquire();
+	Machine.interrupt().disable();
+	
+	Machine.interrupt().enable();
+	conditionLock.acquire();	//reacquire lock before sleep() returns
+	return;
     }
 
     /**
@@ -44,6 +47,8 @@ public class Condition2 {
      */
     public void wake() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+	
+	
     }
 
     /**

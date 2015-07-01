@@ -61,7 +61,7 @@ public final class Machine {
 	new TCB().start(new Runnable() {
 	    public void run() { autoGrader.start(privilege); }
 	});
-    }
+    } //end main
 
     /**
      * Yield to non-Nachos threads. Use in non-preemptive JVM's to give

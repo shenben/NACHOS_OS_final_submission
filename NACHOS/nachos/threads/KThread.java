@@ -1,5 +1,7 @@
 package nachos.threads;
 
+import java.util.List;
+
 import nachos.machine.*;
 
 /**
@@ -272,29 +274,30 @@ public class KThread {
      * call is not guaranteed to return. This thread must not be the current
      * thread.
      */
-    public void join() {
-	Lib.debug(dbgThread, "Joining to thread: " + toString());
 
-	Lib.assertTrue(this != currentThread);
+    public void join() 
+    {	
+	    Lib.debug(dbgThread, "Joining to thread: " + toString());
 	
-	/*
-	 * page 196 of OSed9 - "the so-called fork-join strategy" 
-	 * Here, the threads created by the parent
-		perform work concurrently, but the parent cannot continue until this work
-		has been completed. Once each thread has finished its work, it terminates
-		and joins with its parent. Only after all of the children have joined can the
-		parent resume execution.
-	 * 
-	 * sleep == wait queue
-	 * 
-	 * 1. Check for necessary conditions (child working)
-	 * 2. 
-	 * 3. 
-	 * 4.
-	 *   
-	 * 
-	 * */
+		Lib.assertTrue(this != currentThread);
+		
+		if(currentThread.status == statusFinished)	//if targeted thread is terminated
+	    {
+	    	return;						//do nothing
+	    }
 
+
+		//1. have an internal list of thread dependencies, add target to current list
+		//2. save current thread state
+		//3. place on wait queue (blocked status)
+		//4. scheduler continues normal operations
+		Machine.interrupt().disable();
+		waitList.add(this);	
+		currentThread.saveState();			
+		currentThread.tcb.contextSwitch();	//switch current with "this" target
+		sleep();
+		Machine.interrupt().enable();
+		runNextThread();
     }
 
     /**
@@ -459,6 +462,7 @@ public class KThread {
     private static int numCreated = 0;
 
     private static ThreadQueue readyQueue = null;
+    private static List<KThread> waitList = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
     private static KThread idleThread = null;
