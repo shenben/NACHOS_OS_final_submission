@@ -277,7 +277,9 @@ public class KThread {
 
     public void join() 
     {	
-	    Lib.debug(dbgThread, "Joining to thread: " + toString());
+    	Machine.interrupt().disable();
+    	
+    	Lib.debug(dbgThread, "Joining to thread: " + toString());
 	
 		Lib.assertTrue(this != currentThread);
 		
@@ -291,7 +293,7 @@ public class KThread {
 		//2. save current thread state
 		//3. place on wait queue (blocked status)
 		//4. scheduler continues normal operations
-		Machine.interrupt().disable();
+		
 		waitList.add(this);	
 		currentThread.saveState();			
 		currentThread.tcb.contextSwitch();	//switch current with "this" target

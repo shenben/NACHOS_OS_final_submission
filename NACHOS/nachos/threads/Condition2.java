@@ -49,6 +49,8 @@ public class Condition2 {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
 	
 	
+	
+	
     }
 
     /**
@@ -57,7 +59,11 @@ public class Condition2 {
      */
     public void wakeAll() {
 	Lib.assertTrue(conditionLock.isHeldByCurrentThread());
+
+
+	
     }
 
     private Lock conditionLock;
+    
 }
