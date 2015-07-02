@@ -28,7 +28,11 @@ public class Alarm {
      */
     public void timerInterrupt() {
 	KThread.currentThread().yield();
-	
+	//for each thread in wait queue
+	if (Machine.timer().getTime() > 0){// 0 will be changed to waitUntil
+		;
+		// thread.ready()
+	}
     }
 
     /**
@@ -45,10 +49,10 @@ public class Alarm {
      *
      * @see	nachos.machine.Timer#getTime()
      */
-    public void waitUntil(long x) {
-	// for now, cheat just to get something working (busy waiting is bad)
-	long wakeTime = Machine.timer().getTime() + x;
-	while (wakeTime > Machine.timer().getTime())
-	    KThread.yield();
+    public long waitUntil(long x) {
+	long waitUntil = Machine.timer().getTime() + x;
+	//set status to statusBlocked
+	KThread.currentThread().sleep();
+	return waitUntil;
     }
 }
