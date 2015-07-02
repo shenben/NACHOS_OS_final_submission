@@ -1,3 +1,15 @@
 Welcome
 
-I have added ssh, so you can now access this repo with that or https.
+Summary of work completed:
+* document and TA review
+
+ToDo:
+1. KThread. (testing needed)
+2. Condition2 (checking code and testing needed)
+3. Alarm.
+4. Communicator.
+5. Scheduler.
+6. Boat.
+7. Redo segments of document for all of the above. 
+
+I tried pulling from inside of main branch and it merged with alarm branch, sorry. 
