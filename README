@@ -12,4 +12,13 @@ ToDo:
 6. Boat.
 7. Redo segments of document for all of the above. 
 
-I tried pulling from inside of main branch and it merged with alarm branch, sorry. 
+I tried pulling from inside of main branch and it merged with alarm branch, sorry.
+
+---
+
+I copied the contents of this readme to the Wiki. It's on the left side menu, 3rd button from the bottom on Bitbucket.
+The Wiki give us Markdown syntax (kind of like HTML), which will be more manageable when this file gets big/complicated.
+
+Syntax guide available here: http://daringfireball.net/projects/markdown/syntax
+
+-Lenny
