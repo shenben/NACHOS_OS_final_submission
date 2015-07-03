@@ -1,6 +1,8 @@
 package nachos.threads;
 
 
+import java.util.Vector;
+
 import nachos.machine.*;
 
 /**
@@ -48,6 +50,7 @@ public class KThread {
 	    tcb = new TCB();
 	}	    
 	else {
+		waitList = new Vector<KThread>();
 	    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 	    readyQueue.acquire(this);	    
 
@@ -282,33 +285,22 @@ public class KThread {
 	
 		Lib.assertTrue(this != currentThread);
 		
-		//System.out.print("target is not current thread \n");
+		System.out.print("target is not current thread \n");
 
 		if(this.status == statusFinished)	//if targeted thread is terminated
 	    {
-			//System.out.print("target is not terminated thread \n");
+			System.out.print("target is not terminated thread \n");
 	    	return;						//do nothing
 	    }
-		
 		System.out.print("adding target to waitList... \n");
-		//waitList.add(this);					//add target to internal waitList
+		
+		waitList.add(this);					//add target to internal waitList
 		System.out.print("target is added to waitList \n");
-		
-		System.out.print("save current state \n");
-		currentThread.saveState();			//save 
-		System.out.print("state saved \n");
-		
-		System.out.print("context switch \n");
-		currentThread.tcb.contextSwitch();	//switch current with "this" target
-		System.out.print("switched \n");
-		
-		
-		Machine.interrupt().enable();
+
+
 		System.out.print("sleeping... \n");
 		sleep();			
-		System.out.print("asleep \n");
-		System.out.print("running next...\n");
-		runNextThread();
+		
     }
 
     /**
@@ -439,13 +431,12 @@ public class KThread {
 	new KThread(new PingTest(1)).setName("forked thread").fork();
 	new PingTest(0).run();
 	*/
-	
-	
+
 	
 	KThread thread1 = new KThread(new PingTest(1)).setName("forked thread 1");
-	KThread thread2 = new KThread(new PingTest(1)).setName("forked thread 2");
+	//KThread thread2 = new KThread(new PingTest(1)).setName("forked thread 2");
 	thread1.fork();
-	thread2.fork();
+	//thread2.fork();
 	//fork two threads, and call join on one of them
 	System.out.println("Start Join");
 	thread1.join();
@@ -494,7 +485,7 @@ public class KThread {
     private static int numCreated = 0;
 
     private static ThreadQueue readyQueue = null;
-    //private static Vector<KThread> waitList = null;
+    private static Vector<KThread> waitList = null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
     private static KThread idleThread = null;
