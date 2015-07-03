@@ -198,8 +198,16 @@ public class KThread {
 	
 	currentThread.status = statusFinished;
 	
-	/**/
-	currentThread.threadsJoinedOnMe.clear();
+	/*all threads on JoinedOnMe are ready*/
+	for (KThread thread: currentThread.threadsJoinedOnMe)
+	{
+		thread.ready();
+	}
+	
+	if(!currentThread.threadsJoinedOnMe.isEmpty())
+		currentThread.threadsJoinedOnMe.clear();
+	
+	//wake up the target parent(s)
 	/**/
 	
 	sleep();
@@ -253,6 +261,9 @@ public class KThread {
 
 	if (currentThread.status != statusFinished)
 	    currentThread.status = statusBlocked;
+
+	
+	//System.out.println("Sleeping threads: " );
 
 	runNextThread();
     }
@@ -395,10 +406,12 @@ public class KThread {
 	status = statusRunning;
 
 	if (toBeDestroyed != null) {
+		System.out.println("~~~~~~~destroy : " +toBeDestroyed.name);
 	    toBeDestroyed.tcb.destroy();
 	    toBeDestroyed.tcb = null;
 	    toBeDestroyed = null;
 	}
+	
     }
 
     /**
@@ -432,19 +445,21 @@ public class KThread {
     public static void selfTest() {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
+	//original source code
 	/*
-	new KThread(new PingTest(1)).setName("forked thread").fork();
-	new PingTest(0).run();
-	*/
+	 * new KThread(new PingTest(1)).setName("forked thread").fork();
+	 * new PingTest(0).run();
+	 * */
 
-	
-	KThread thread1 = new KThread(new PingTest(1)).setName("forked thread 1");
-	//KThread thread2 = new KThread(new PingTest(1)).setName("forked thread 2");
+
+	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
+	KThread thread2 = new KThread(new PingTest(3)).setName("forked thread 2");
 	thread1.fork();
-	//thread2.fork();
+	thread2.fork();
 	//fork two threads, and call join on one of them
 	System.out.println("Start Join");
 	thread1.join();
+	
 	System.out.println("Join Complete");
 	//so it shouldn't run until the other one completes
 	new PingTest(1).run();
@@ -452,7 +467,7 @@ public class KThread {
 	System.out.println("******************");
 	//conditionTest();
 	Lib.debug(dbgThread, "End KThread.selfTest");
-	 
+
 	
     }
 
@@ -494,5 +509,6 @@ public class KThread {
     //private static Set<KThread> threadsJoinedOnMe=null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
-    private static KThread idleThread = null;
+
+	private static KThread idleThread = null;
 }
