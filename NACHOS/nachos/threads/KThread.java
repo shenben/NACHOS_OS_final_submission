@@ -201,6 +201,7 @@ public class KThread {
 	/*all threads on JoinedOnMe are ready*/
 	for (KThread thread: currentThread.threadsJoinedOnMe)
 	{
+		System.out.println("Finishing... waking up: " + thread.name);
 		thread.ready();
 	}
 	
@@ -304,7 +305,7 @@ public class KThread {
 
 		if(this.status == statusFinished)	//if targeted thread is terminated
 	    {
-			System.out.print("target is not terminated thread \n");
+			System.out.print("target is terminated thread \n");
 	    	return;						//do nothing
 	    }
 		System.out.print("adding target to waitList... \n");
@@ -438,6 +439,8 @@ public class KThread {
 
 	private int which;
     }
+    
+    
 
     /**
      * Tests whether this module is working.
@@ -451,7 +454,8 @@ public class KThread {
 	 * new PingTest(0).run();
 	 * */
 
-
+	//test case 1
+	/* 
 	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
 	KThread thread2 = new KThread(new PingTest(3)).setName("forked thread 2");
 	thread1.fork();
@@ -465,9 +469,39 @@ public class KThread {
 	new PingTest(1).run();
 
 	System.out.println("******************");
-	//conditionTest();
-	Lib.debug(dbgThread, "End KThread.selfTest");
+	*/
+	
+	//test case 2 (main calls join on terminated thread
+	/*
+	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
+	
+	thread1.fork();
 
+	System.out.println("START Join");
+	thread1.join();	//main sleeps until thread 1 is done
+	System.out.println("Join Complete");
+	
+	System.out.println("START Join");
+	thread1.join();
+
+	System.out.println("Join Complete");
+	*/
+	
+	//test case 3 
+	/**/
+	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
+	KThread thread2 = new KThread(new PingTest(2)).setName("forked thread 1");
+	thread1.fork();	//main forks this
+	System.out.println("START Join");
+	thread1.join();	//main sleeps
+	System.out.println("Join Complete");
+	thread2.fork();	//thread1 forks this
+	System.out.println("START Join");
+	thread2.join(); //thread1 sleeps
+	System.out.println("Join Complete");
+	/**/
+	Lib.debug(dbgThread, "End KThread.selfTest");
+	
 	
     }
 
