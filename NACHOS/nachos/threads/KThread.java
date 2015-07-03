@@ -1,6 +1,7 @@
 package nachos.threads;
 
 
+import java.util.Set;
 import java.util.Vector;
 
 import nachos.machine.*;
@@ -48,10 +49,9 @@ public class KThread {
     public KThread() {
 	if (currentThread != null) {
 	    tcb = new TCB();
-	}	    
+	    	}	    
 	else {
-		waitList = new Vector<KThread>();
-	    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
+			    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 	    readyQueue.acquire(this);	    
 
 	    currentThread = this;
@@ -61,6 +61,7 @@ public class KThread {
 
 	    createIdleThread();
 	}
+	threadsJoinedOnMe = new Vector<KThread>();
     }
 
     /**
@@ -189,14 +190,17 @@ public class KThread {
 	Lib.debug(dbgThread, "Finishing thread: " + currentThread.toString());
 	
 	Machine.interrupt().disable();
-
+	
 	Machine.autoGrader().finishingCurrentThread();
-
+	
 	Lib.assertTrue(toBeDestroyed == null);
 	toBeDestroyed = currentThread;
-
-
+	
 	currentThread.status = statusFinished;
+	
+	/**/
+	currentThread.threadsJoinedOnMe.clear();
+	/**/
 	
 	sleep();
     }
@@ -281,11 +285,11 @@ public class KThread {
     {	
     	Machine.interrupt().disable();
     	
-    	Lib.debug(dbgThread, "Joining to thread: " + toString());
-	
+    	Lib.debug(dbgThread, currentThread.name + " is Joining to thread: " + toString());
+    	
 		Lib.assertTrue(this != currentThread);
 		
-		System.out.print("target is not current thread \n");
+		//System.out.print("target is not current thread \n");
 
 		if(this.status == statusFinished)	//if targeted thread is terminated
 	    {
@@ -293,13 +297,14 @@ public class KThread {
 	    	return;						//do nothing
 	    }
 		System.out.print("adding target to waitList... \n");
+		//threadsJoinedOnMe.add(this);		
 		
-		waitList.add(this);					//add target to internal waitList
+		threadsJoinedOnMe.add(currentThread);		//add self to targets dependencies
 		System.out.print("target is added to waitList \n");
 
-
 		System.out.print("sleeping... \n");
-		sleep();			
+		//while(!this.threadsJoinedOnMe.isEmpty())
+		sleep();	
 		
     }
 
@@ -485,7 +490,8 @@ public class KThread {
     private static int numCreated = 0;
 
     private static ThreadQueue readyQueue = null;
-    private static Vector<KThread> waitList = null;
+    private Vector<KThread> threadsJoinedOnMe = null;
+    //private static Set<KThread> threadsJoinedOnMe=null;
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
     private static KThread idleThread = null;
