@@ -1,5 +1,7 @@
 package nachos.threads;
 
+import java.util.Queue;
+
 import nachos.machine.*;
 
 /**
@@ -27,6 +29,16 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
+    	//using a simple monitor example
+    	
+    	//Machine.interrupt().disable();
+    	lock.acquire();
+    	queue.add(word);
+    	
+    	dataready.notify(); //signal()
+    	
+    	lock.release();
+    	//Machine.interrupt().enable();
     }
 
     /**
@@ -36,6 +48,20 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
-	return 0;
+    	lock.acquire();
+    	while(queue.isEmpty())
+			try {
+				dataready.wait();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	
+    	int item = (int) queue.remove();
+    	lock.release();
+    	return item;
     }
+    Lock lock;
+    Condition dataready;
+	Queue<Integer> queue;	
 }

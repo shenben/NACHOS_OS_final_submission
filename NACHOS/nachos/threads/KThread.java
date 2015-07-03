@@ -296,28 +296,12 @@ public class KThread {
     public void join() 
     {	
     	Machine.interrupt().disable();
-    	
     	Lib.debug(dbgThread, currentThread.name + " is Joining to thread: " + toString());
-    	
 		Lib.assertTrue(this != currentThread);
-		
-		//System.out.print("target is not current thread \n");
-
 		if(this.status == statusFinished)	//if targeted thread is terminated
-	    {
-			System.out.print("target is terminated thread \n");
-	    	return;						//do nothing
-	    }
-		System.out.print("adding target to waitList... \n");
-		//threadsJoinedOnMe.add(this);		
-		
+	       	return;						//do nothing
 		threadsJoinedOnMe.add(currentThread);		//add self to targets dependencies
-		System.out.print("target is added to waitList \n");
-
-		System.out.print("sleeping... \n");
-		//while(!this.threadsJoinedOnMe.isEmpty())
-		sleep();	
-		
+		sleep();
     }
 
     /**
@@ -453,7 +437,7 @@ public class KThread {
 	 * new KThread(new PingTest(1)).setName("forked thread").fork();
 	 * new PingTest(0).run();
 	 * */
-
+	
 	//test case 1
 	/* 
 	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
@@ -500,10 +484,10 @@ public class KThread {
 	thread2.join(); //thread1 sleeps
 	System.out.println("Join Complete");
 	/**/
+	
+	
 	Lib.debug(dbgThread, "End KThread.selfTest");
-	
-	
-    }
+	}
 
     private static final char dbgThread = 't';
 

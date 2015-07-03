@@ -56,11 +56,10 @@ public class Condition2 {
 	}
 	else
 	{
-		waitList.remove(0).ready();
+		waitList.remove(0).ready();	//wake and make ready
 	}
 	Machine.interrupt().restore(status);
     }
-
     /**
      * Wake up all threads sleeping on this condition variable. The current
      * thread must hold the associated lock.
