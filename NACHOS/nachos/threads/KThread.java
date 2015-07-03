@@ -282,23 +282,33 @@ public class KThread {
 	
 		Lib.assertTrue(this != currentThread);
 		
-		System.out.print("target is not current thread \n");
+		//System.out.print("target is not current thread \n");
 
 		if(this.status == statusFinished)	//if targeted thread is terminated
 	    {
-			System.out.print("target is not terminated thread \n");
-	    	//return;						//do nothing
+			//System.out.print("target is not terminated thread \n");
+	    	return;						//do nothing
 	    }
 		
 		System.out.print("adding target to waitList... \n");
 		//waitList.add(this);					//add target to internal waitList
 		System.out.print("target is added to waitList \n");
-		currentThread.saveState();			//save 
-		currentThread.tcb.contextSwitch();	//switch current with "this" target
-		sleep();							
-		Machine.interrupt().enable();
-		runNextThread();
 		
+		System.out.print("save current state \n");
+		currentThread.saveState();			//save 
+		System.out.print("state saved \n");
+		
+		System.out.print("context switch \n");
+		currentThread.tcb.contextSwitch();	//switch current with "this" target
+		System.out.print("switched \n");
+		
+		
+		Machine.interrupt().enable();
+		System.out.print("sleeping... \n");
+		sleep();			
+		System.out.print("asleep \n");
+		System.out.print("running next...\n");
+		runNextThread();
     }
 
     /**
@@ -431,7 +441,7 @@ public class KThread {
 	*/
 	
 	
-	/*
+	
 	KThread thread1 = new KThread(new PingTest(1)).setName("forked thread 1");
 	KThread thread2 = new KThread(new PingTest(1)).setName("forked thread 2");
 	thread1.fork();
@@ -446,7 +456,7 @@ public class KThread {
 	System.out.println("******************");
 	//conditionTest();
 	Lib.debug(dbgThread, "End KThread.selfTest");
-	 */
+	 
 	
     }
 
