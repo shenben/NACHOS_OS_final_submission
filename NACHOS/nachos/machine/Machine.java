@@ -54,7 +54,7 @@ public final class Machine {
 
 	securityManager.enable();
 	createDevices();
-	checkUserClasses();
+	checkUserClasses();	//throw exception
 
 	autoGrader = (AutoGrader) Lib.constructObject(autoGraderClassName);
 

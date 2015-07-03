@@ -29,10 +29,14 @@ public class Alarm {
     public void timerInterrupt() {
 	KThread.currentThread().yield();
 	//for each thread in wait queue
-	if (Machine.timer().getTime() > 0){// 0 will be changed to waitUntil
-		;
+	/*
+	if (Machine.timer().getTime() > 0){
+		
+		// 0 will be changed to waitUntil
+		
 		// thread.ready()
 	}
+	*/
     }
 
     /**
@@ -49,10 +53,14 @@ public class Alarm {
      *
      * @see	nachos.machine.Timer#getTime()
      */
-    public long waitUntil(long x) {
+    public void waitUntil(long x) {
+    	/*
 	long waitUntil = Machine.timer().getTime() + x;
 	//set status to statusBlocked
 	KThread.currentThread().sleep();
 	return waitUntil;
+		*/
+    	//long that = 0;
+    	//return that;
     }
 }

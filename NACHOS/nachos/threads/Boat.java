@@ -11,6 +11,8 @@ public class Boat
 	
 	System.out.println("\n ***Testing Boats with only 2 children***");
 	begin(0, 2, b);
+	
+	
 
 //	System.out.println("\n ***Testing Boats with 2 children, 1 adult***");
 //  	begin(1, 2, b);
