@@ -89,9 +89,10 @@ public class Semaphore {
     public static void selfTest() {
 	Semaphore ping = new Semaphore(0);
 	Semaphore pong = new Semaphore(0);
-
+	
 	new KThread(new PingTest(ping, pong)).setName("ping").fork();
 
+	
 	for (int i=0; i<10; i++) {
 	    ping.V();
 	    pong.P();

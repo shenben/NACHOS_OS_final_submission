@@ -29,16 +29,18 @@ public class Communicator {
      * @param	word	the integer to transfer.
      */
     public void speak(int word) {
-    	//using a simple monitor example
+    	//i want to send to someone
+    	//signal that request
+    	//notified that listener is ready
+    	//send message
+    	//listener returns
     	
-    	//Machine.interrupt().disable();
     	lock.acquire();
-    	queue.add(word);
-    	
+    	lockReady=false;
+    	//queue.add(word);
     	dataready.notify(); //signal()
-    	
+    	KThread.sleep();
     	lock.release();
-    	//Machine.interrupt().enable();
     }
 
     /**
@@ -48,7 +50,14 @@ public class Communicator {
      * @return	the integer transferred.
      */    
     public int listen() {
-    	lock.acquire();
+    	
+    	if(lockReady=true)
+    		lock.acquire();	//wait if cant get lock
+    	else
+    	{
+    		
+    	}
+    	
     	while(queue.isEmpty())
 			try {
 				dataready.wait();
@@ -62,6 +71,8 @@ public class Communicator {
     	return item;
     }
     Lock lock;
-    Condition dataready;
-	Queue<Integer> queue;	
+    boolean lockReady = true;
+    Condition2 dataready;
+	Queue<Integer> queue;
+	
 }
