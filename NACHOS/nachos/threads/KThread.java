@@ -47,11 +47,14 @@ public class KThread {
      * create an idle thread as well.
      */
     public KThread() {
+    	boolean status = Machine.interrupt().disable();
+    	threadsJoinedOnMe.acquire(this);
+    	Machine.interrupt().restore(status);
 	if (currentThread != null) {
 	    tcb = new TCB();
 	    	}	    
 	else {
-			    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
+	    readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 	    readyQueue.acquire(this);	    
 
 	    currentThread = this;
@@ -61,7 +64,7 @@ public class KThread {
 
 	    createIdleThread();
 	}
-	threadsJoinedOnMe = new Vector<KThread>();
+	//threadsJoinedOnMe = new ThreadQueue();
     }
 
     /**
@@ -187,6 +190,7 @@ public class KThread {
      * delete this thread.
      */
     public static void finish() {
+	/*
 	Lib.debug(dbgThread, "Finishing thread: " + currentThread.toString());
 	
 	Machine.interrupt().disable();
@@ -198,7 +202,8 @@ public class KThread {
 	
 	currentThread.status = statusFinished;
 	
-	/*all threads on JoinedOnMe are ready*/
+	//all threads on JoinedOnMe are ready
+	
 	for (KThread thread: currentThread.threadsJoinedOnMe)
 	{
 		System.out.println("Finishing... waking up: " + thread.name);
@@ -209,9 +214,31 @@ public class KThread {
 		currentThread.threadsJoinedOnMe.clear();
 	
 	//wake up the target parent(s)
-	/**/
 	
 	sleep();
+	*/
+	
+	Lib.debug(dbgThread, "Finishing thread: " + currentThread.toString());
+
+	Machine.interrupt().disable();
+
+	Machine.autoGrader().finishingCurrentThread();
+
+	Lib.assertTrue(toBeDestroyed == null);
+	toBeDestroyed = currentThread;
+
+	currentThread.status = statusFinished;
+
+	// TASK 1.1
+	KThread waitThread;
+	while ((waitThread = currentThread.threadsJoinedOnMe.nextThread()) != null) {
+		waitThread.ready();
+	}
+
+	sleep();
+	
+	
+	
     }
 
     /**
@@ -295,6 +322,7 @@ public class KThread {
 
     public void join() 
     {	
+    	/*
     	Machine.interrupt().disable();
     	Lib.debug(dbgThread, currentThread.name + " is Joining to thread: " + toString());
 		Lib.assertTrue(this != currentThread);
@@ -302,6 +330,22 @@ public class KThread {
 	       	return;						//do nothing
 		threadsJoinedOnMe.add(currentThread);		//add self to targets dependencies
 		sleep();
+		*/
+    	Lib.debug(dbgThread, "Joining to thread: " + toString());
+
+		Lib.assertTrue(this != currentThread);
+
+		// TASK 1.1
+		boolean intStatus = Machine.interrupt().disable();
+
+		// so the current thread will wait for this thread
+		// not need to wait if the thread is already dead
+		if (status != statusFinished) {
+			threadsJoinedOnMe.waitForAccess(currentThread);
+			KThread.sleep();
+		}
+
+		Machine.interrupt().restore(intStatus);
     }
 
     /**
@@ -433,10 +477,10 @@ public class KThread {
 	Lib.debug(dbgThread, "Enter KThread.selfTest");
 	
 	//original source code
-	/*
-	 * new KThread(new PingTest(1)).setName("forked thread").fork();
-	 * new PingTest(0).run();
-	 * */
+	
+	new KThread(new PingTest(1)).setName("forked thread").fork();
+	new PingTest(0).run();
+	
 	
 	//test case 1
 	/* 
@@ -472,7 +516,7 @@ public class KThread {
 	*/
 	
 	//test case 3 
-	/**/
+	/*
 	KThread thread1 = new KThread(new PingTest(2)).setName("forked thread 1");
 	KThread thread2 = new KThread(new PingTest(2)).setName("forked thread 1");
 	thread1.fork();	//main forks this
@@ -483,7 +527,7 @@ public class KThread {
 	System.out.println("START Join");
 	thread2.join(); //thread1 sleeps
 	System.out.println("Join Complete");
-	/**/
+	*/
 	
 	
 	Lib.debug(dbgThread, "End KThread.selfTest");
@@ -523,10 +567,13 @@ public class KThread {
     private static int numCreated = 0;
 
     private static ThreadQueue readyQueue = null;
-    private Vector<KThread> threadsJoinedOnMe = null;
-    //private static Set<KThread> threadsJoinedOnMe=null;
+    //Vector<KThread> threadsJoinedOnMe = null;
+    ThreadQueue threadsJoinedOnMe=ThreadedKernel.scheduler.newThreadQueue(true);
+    
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
 
 	private static KThread idleThread = null;
+	
+	
 }
