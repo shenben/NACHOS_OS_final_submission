@@ -148,7 +148,7 @@ public class PriorityScheduler extends Scheduler {
 	    
 			 ////////////////////////////////////
 			 /*--------Added By Andrew--------*/
-			    Lib.assertTrue(Machine.interrupt().disabled());
+			    //Lib.assertTrue(Machine.interrupt().disabled());
 			    /*disable interrupts*/
 				ThreadState nextThread = pickNextThread();
 					if(nextThread != null) 
