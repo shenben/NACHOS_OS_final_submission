@@ -24,7 +24,6 @@ public class Alarm {
 			}
 		});
 	}
-
 	/**
 	 * The timer interrupt handler. This is called by the machine's timer
 	 * periodically (approximately every 500 clock ticks). Causes the current
@@ -32,17 +31,13 @@ public class Alarm {
 	 * should be run.
 	 */
 	public void timerInterrupt() {
-		// TASK 1.3
 		boolean intStatus = Machine.interrupt().disable();
-
 		while (!waitQueue.isEmpty())
-			if (waitQueue.peek().wakeTime <= Machine.timer().getTime())
+			if (waitQueue.peek().wakeTime <= Machine.timer().getTime())	
 				waitQueue.poll().thread.ready();
 			else
 				break;
-
 		Machine.interrupt().restore(intStatus);
-
 		KThread.yield();
 	}
 
@@ -60,32 +55,27 @@ public class Alarm {
 	 * @see nachos.machine.Timer#getTime()
 	 */
 	public void waitUntil(long x) {
-		// TASK 1.3
 		boolean intStatus = Machine.interrupt().disable();
-
 		long wakeTime = Machine.timer().getTime() + x;
-		waitQueue.add(new Waiter(KThread.currentThread(), wakeTime));
-
+		waitQueue.add(new Comparitor(KThread.currentThread(), wakeTime));
 		KThread.sleep();
-
 		Machine.interrupt().restore(intStatus);
 	}
 
-	// TASK 1.3
-	private PriorityQueue<Waiter> waitQueue = new PriorityQueue<Waiter>();
-
-	// TASK 1.3
-	private class Waiter implements Comparable<Waiter> {
+	//queue of thread and associated time
+	
+	private PriorityQueue<Comparitor> waitQueue = new PriorityQueue<Comparitor>();
+	//new class to be contained in queue
+	
+	private class Comparitor implements Comparable<Comparitor> {
 		private KThread thread;
 		private long wakeTime;
-
-		Waiter(KThread thread, long wakeTime) {
+		Comparitor(KThread thread, long wakeTime) {
 			this.thread = thread;
 			this.wakeTime = wakeTime;
 		}
-
 		@Override
-		public int compareTo(Waiter that) {
+		public int compareTo(Comparitor that) {
 			return Long.signum(wakeTime - that.wakeTime);
 		}
 	}

@@ -154,8 +154,6 @@ public class PriorityScheduler extends Scheduler {
 			return threadState.thread;
 		}
 		else
-	    
-	    
 	    return null;
 	}
 
@@ -217,7 +215,6 @@ public class PriorityScheduler extends Scheduler {
 	 */
 	public ThreadState(KThread thread) {
 	    this.thread = thread;
-	    
 	    setPriority(priorityDefault);
 	}
 

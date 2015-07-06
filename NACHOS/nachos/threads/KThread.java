@@ -567,13 +567,16 @@ public class KThread {
     private static int numCreated = 0;
 
     private static ThreadQueue readyQueue = null;
-    //Vector<KThread> threadsJoinedOnMe = null;
-    ThreadQueue threadsJoinedOnMe=ThreadedKernel.scheduler.newThreadQueue(true);
     
     private static KThread currentThread = null;
     private static KThread toBeDestroyed = null;
 
 	private static KThread idleThread = null;
+
+	
+	/******/
+	ThreadQueue threadsJoinedOnMe=ThreadedKernel.scheduler.newThreadQueue(true);
+	public long waitUntil;
 	
 	
 }
