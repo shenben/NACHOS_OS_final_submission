@@ -33,25 +33,24 @@ public class Communicator {
 	 *            the integer to transfer.
 	 */
 	public void speak(int word) {
-
-		lock.acquire();
-
-		if (!Listener.isEmpty()) {
-			Machine.interrupt().disable();
-			ThreadInfo listen = Listener.removeFirst();
-			Machine.interrupt().enable();
-			listen.setWord(word);
-			listen.getCondition().wake();
+		lock.acquire();					
+		if (!Listener.isEmpty() ) 		//if listeners exist
+		{
+			Machine.interrupt().disable();					//disable interrupts
+			ThreadInfo listen = Listener.removeFirst();		//remove from CommWaitList
+			Machine.interrupt().enable();					//enable ints
+			listen.setWord(word);							//set the listener's word
+			listen.getCondition().wake();					//call Condition2.wake()
 		}
-		else {
-			ThreadInfo speaker = new ThreadInfo();
-			speaker.setWord(word);
-			Speaker.add(speaker);
-			speaker.getCondition().sleep();
+		else 
+		{
+			ThreadInfo speaker = new ThreadInfo();		//create a wrapper
+			speaker.setWord(word);						//wrap the int
+			Speaker.add(speaker);						//add to LinkedList
+			speaker.getCondition().sleep();				//add to Condition2.waitlist
 		}
-		lock.release();
+		lock.release();								
 	}
-
 	/**
 	 * Wait for a thread to speak through this communicator, and then return the
 	 * <i>word</i> that thread passed to <tt>speak()</tt>.
@@ -59,21 +58,20 @@ public class Communicator {
 	 * @return the integer transferred.
 	 */
 	public int listen() {
-
 		lock.acquire();
-
 		int word = 0;
-
-		if (!Speaker.isEmpty()) {
-			ThreadInfo speaker = Speaker.removeFirst();
-			word = speaker.getWord();
-			speaker.getCondition().wake();
+		if (!Speaker.isEmpty()) 		//speakers exist
+		{
+			ThreadInfo speaker = Speaker.removeFirst();	//get first speaker on list
+			word = speaker.getWord();					//unwrap word
+			speaker.getCondition().wake();				//remove from Condition2.waitList
 		}
-		else {
-			ThreadInfo listener = new ThreadInfo();
-			Listener.add(listener);
-			listener.getCondition().sleep();
-			word = listener.getWord();
+		else 
+		{
+			ThreadInfo listener = new ThreadInfo();		//get wrapper
+			Listener.add(listener);						//wrap the int
+			listener.getCondition().sleep();			//puts self on condition2.Waitlist
+			word = listener.getWord();					//
 		}
 		lock.release();
 		return word;
@@ -85,28 +83,25 @@ public class Communicator {
 	 */
 	private static Lock lock;
 
-	private class ThreadInfo {
+	private class ThreadInfo 
+	{
 		int word;
-		Condition condition;
-
-		public ThreadInfo() {
+		Condition2 condition;
+		public ThreadInfo() 
+		{
 			word = 0;
-			condition = new Condition(lock);
+			condition = new Condition2(lock);
 		}
-
-		public Condition getCondition() {
+		public Condition2 getCondition() {
 			return condition;
 		}
-
 		public int getWord() {
 			return word;
 		}
-
 		public void setWord(int w) {
 			this.word = w;
 		}
 	}
-
 	private LinkedList<ThreadInfo> Speaker;
 	private LinkedList<ThreadInfo> Listener;
 }

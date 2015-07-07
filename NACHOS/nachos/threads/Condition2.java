@@ -56,7 +56,6 @@ public class Condition2 {
 	 */
 	public void wakeAll() {
 		Lib.assertTrue(conditionLock.isHeldByCurrentThread());
-		// TASK 1.2
 		while (!waitQueue.isEmpty())
 			wake();
 	}

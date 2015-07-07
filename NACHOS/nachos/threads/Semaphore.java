@@ -34,18 +34,17 @@ public class Semaphore {
     /**
      * Atomically wait for this semaphore to become non-zero and decrement it.
      */
-    public void P() {
-	boolean intStatus = Machine.interrupt().disable();
-
-	if (value == 0) {
-	    waitQueue.waitForAccess(KThread.currentThread());
-	    KThread.sleep();
-	}
-	else {
-	    value--;
-	}
-
-	Machine.interrupt().restore(intStatus);
+    public void P() 
+    {
+		boolean intStatus = Machine.interrupt().disable();
+		if (value == 0) {
+		    waitQueue.waitForAccess(KThread.currentThread());
+		    KThread.sleep();
+		}
+		else {
+		    value--;
+		}
+		Machine.interrupt().restore(intStatus);
     }
 
     /**

@@ -65,8 +65,8 @@ public class Alarm {
 	//queue of thread and associated time
 	
 	private PriorityQueue<Comparitor> waitQueue = new PriorityQueue<Comparitor>();
-	//new class to be contained in queue
 	
+	//new class for queue template
 	private class Comparitor implements Comparable<Comparitor> {
 		private KThread thread;
 		private long wakeTime;
