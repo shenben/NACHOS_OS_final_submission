@@ -255,7 +255,7 @@ public class PriorityScheduler extends Scheduler {
 	    // implement me
 			/*-------------Andrew-------------*/
 		    /*-------------Landon-------------*/
-				return getEffectivePriority(new HashSet<ThreadState>());
+				return getEffectivePriority(new HashSet<ThreadState>());	//use next function
 			/*-------------Andrew-------------*/
 		    /*-------------Landon-------------*/
 	}

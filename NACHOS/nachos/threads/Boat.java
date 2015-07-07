@@ -72,79 +72,91 @@ public class Boat {
 	}
 
 	static void AdultItinerary() {
-		boolean onOahu = true;
+		boolean onOahu = true;		//adults never go back to oahu
 		commonLock.acquire();
 		while (true) {
 			Lib.assertTrue(onOahu);
-			if (boatState == boatEmpty && boatOnOahu && childrenOnOahu <= 1) {
+					//if there is 1 or less children at oahu, then there are one or more children at molokai
+			if (boatState == boatEmpty && boatOnOahu && childrenOnOahu <= 1) 
+			{
 				onOahu = false;
-				adultsOnOahu--;
+				adultsOnOahu--;					
 				boatOnOahu = false;
-				bg.AdultRowToMolokai();
-				if (adultsOnOahu == 0 && childrenOnOahu == 0) {
-					finished.V();
-					sleepAdultsMolokai.sleep();
+				bg.AdultRowToMolokai();							//adult leaves oahu
+				if (adultsOnOahu == 0 && childrenOnOahu == 0) 
+				{
+					finished.V();						//add +1 to "done list"
+					sleepAdultsMolokai.sleep();			//release lock and sleep
 				}
-				sleepChildrenMolokai.wakeAll();
-				sleepAdultsMolokai.sleep();
+				sleepChildrenMolokai.wakeAll();			//remove all from condition2.waitqueue
+				sleepAdultsMolokai.sleep();				//release lock and sleep
 			}
-			else
-				sleepAdultsOahu.sleep();
+			else	//cant get on boat, boat is not at oahu, no children waiting on other side
+				sleepAdultsOahu.sleep();	
 		}
 	}
 
 	static void ChildItinerary() {
-		boolean onOahu = true;
+		boolean onOahu = true;	//children can go back and forth
 		commonLock.acquire();
 		while (true)
-			if (onOahu) {
-				if (boatOnOahu && boatState == boatEmpty) {
+			if (onOahu) 
+			{
+				if (boatOnOahu && boatState == boatEmpty) 
+				{
 					onOahu = false;
 					childrenOnOahu--;
-					bg.ChildRowToMolokai();
-					if (childrenOnOahu > 0) {
+					bg.ChildRowToMolokai();		//leave oahu
+					if (childrenOnOahu > 0) 	//if more children can get on the boat...
+					{
 						boatState = boatHalf;
 						sleepChildrenOahu.wakeAll();
 					}
-					else {
+					else //there are no more children at oahu. loner rower kid
+					{
 						boatOnOahu = false;
 						boatState = boatEmpty;
-						if (adultsOnOahu == 0 && childrenOnOahu == 0) {
-							finished.V();
-							sleepChildrenMolokai.sleep();
+						if (adultsOnOahu == 0 && childrenOnOahu == 0) 
+						{
+							finished.V();								//child done
+							sleepChildrenMolokai.sleep();			//release lock and sleep
 						}
 						sleepChildrenMolokai.wakeAll();
 					}
-					sleepChildrenMolokai.sleep();
+					sleepChildrenMolokai.sleep();					//release lock and sleep
 				}
-				else if (boatOnOahu && boatState == boatHalf) {
+				else if (boatOnOahu && boatState == boatHalf) 
+				{
 					onOahu = false;
 					childrenOnOahu--;
-					bg.ChildRideToMolokai();
-					boatOnOahu = false;
-					boatState = boatEmpty;
-					if (adultsOnOahu == 0 && childrenOnOahu == 0) {
-						finished.V();
+					bg.ChildRideToMolokai();	//current child rows to molokai
+					boatOnOahu = false;			//boat crosses
+					boatState = boatEmpty;		//children stay at molokai
+					if (adultsOnOahu == 0 && childrenOnOahu == 0) 
+					{
+						finished.V();									
 						sleepChildrenMolokai.sleep();
 					}
-					sleepChildrenMolokai.wakeAll();
-					sleepChildrenMolokai.sleep();
+					sleepChildrenMolokai.wakeAll();					//remove all from condition2.waitqueue
+					sleepChildrenMolokai.sleep();					//release lock and sleep
 				}
-				else
+				else	//boatonOahu && boatfull
 					sleepChildrenOahu.sleep();
-			}
-			else {
-				if (!boatOnOahu) {
-					bg.ChildRowToOahu();
+			}//if on oahu
+			else 	//else on molokai
+			{
+				if (!boatOnOahu) 					//boat is on molokai
+				{
+					bg.ChildRowToOahu();			//go back to oahu for adult or child
 					childrenOnOahu++;
 					boatOnOahu = true;
 					sleepAdultsOahu.wakeAll();
-					sleepChildrenOahu.wakeAll();
-					onOahu = true;
-					sleepChildrenOahu.sleep();
+					sleepChildrenOahu.wakeAll();	
+					onOahu = true;					
+					sleepChildrenOahu.sleep();		//release lock and sleep
 				}
-				else
-					sleepChildrenMolokai.sleep();
+				else								//boat is not here
+					sleepChildrenMolokai.sleep();	//release lock and sleep
 			}
 	}
 

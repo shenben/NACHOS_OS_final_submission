@@ -1,9 +1,6 @@
 package nachos.threads;
 
 
-import java.util.Set;
-import java.util.Vector;
-
 import nachos.machine.*;
 
 /**
