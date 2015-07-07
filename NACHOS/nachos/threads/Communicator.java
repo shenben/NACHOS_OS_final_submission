@@ -17,8 +17,8 @@ public class Communicator {
 	 */
 	public Communicator() {
 		lock = new Lock();
-		Speaker = new LinkedList<ThreadInfo>();
-		Listener = new LinkedList<ThreadInfo>();
+		Speaker = new LinkedList<ResourceWrapper>();
+		Listener = new LinkedList<ResourceWrapper>();
 	}
 
 	/**
@@ -32,22 +32,23 @@ public class Communicator {
 	 * @param word
 	 *            the integer to transfer.
 	 */
-	public void speak(int word) {
+	public void speak(int word) 
+	{
 		lock.acquire();					
 		if (!Listener.isEmpty() ) 		//if listeners exist
 		{
-			Machine.interrupt().disable();					//disable interrupts
-			ThreadInfo listen = Listener.removeFirst();		//remove from CommWaitList
-			Machine.interrupt().enable();					//enable ints
-			listen.setWord(word);							//set the listener's word
-			listen.getCondition().wake();					//call Condition2.wake()
+			Machine.interrupt().disable();							//disable interrupts
+			ResourceWrapper listen = Listener.removeFirst();		//remove from CommWaitList
+			Machine.interrupt().enable();							//enable ints
+			listen.setWord(word);									//set the listener's word
+			listen.getCondition().wake();							//call Condition2.wake()
 		}
 		else 
 		{
-			ThreadInfo speaker = new ThreadInfo();		//create a wrapper
-			speaker.setWord(word);						//wrap the int
-			Speaker.add(speaker);						//add to LinkedList
-			speaker.getCondition().sleep();				//add to Condition2.waitlist
+			ResourceWrapper speaker = new ResourceWrapper();		//create a wrapper
+		speaker.setWord(word);										//wrap the int
+			Speaker.add(speaker);									//add to LinkedList
+			speaker.getCondition().sleep();							//add to Condition2.waitlist
 		}
 		lock.release();								
 	}
@@ -62,13 +63,13 @@ public class Communicator {
 		int word = 0;
 		if (!Speaker.isEmpty()) 		//speakers exist
 		{
-			ThreadInfo speaker = Speaker.removeFirst();	//get first speaker on list
+			ResourceWrapper speaker = Speaker.removeFirst();	//get first speaker on list
 			word = speaker.getWord();					//unwrap word
 			speaker.getCondition().wake();				//remove from Condition2.waitList
 		}
 		else 
 		{
-			ThreadInfo listener = new ThreadInfo();		//get wrapper
+			ResourceWrapper listener = new ResourceWrapper();		//get wrapper
 			Listener.add(listener);						//wrap the int
 			listener.getCondition().sleep();			//puts self on condition2.Waitlist
 			word = listener.getWord();					//
@@ -83,11 +84,11 @@ public class Communicator {
 	 */
 	private static Lock lock;
 
-	private class ThreadInfo 
+	private class ResourceWrapper 
 	{
 		int word;
 		Condition2 condition;
-		public ThreadInfo() 
+		public ResourceWrapper() 
 		{
 			word = 0;
 			condition = new Condition2(lock);
@@ -102,6 +103,6 @@ public class Communicator {
 			this.word = w;
 		}
 	}
-	private LinkedList<ThreadInfo> Speaker;
-	private LinkedList<ThreadInfo> Listener;
+	private LinkedList<ResourceWrapper> Speaker;
+	private LinkedList<ResourceWrapper> Listener;
 }
