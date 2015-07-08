@@ -431,7 +431,7 @@ public class KThread {
 	status = statusRunning;
 
 	if (toBeDestroyed != null) {
-		System.out.println("~~~~~~~destroy : " +toBeDestroyed.name);
+		//System.out.println("~~~~~~~destroy : " +toBeDestroyed.name);
 	    toBeDestroyed.tcb.destroy();
 	    toBeDestroyed.tcb = null;
 	    toBeDestroyed = null;
