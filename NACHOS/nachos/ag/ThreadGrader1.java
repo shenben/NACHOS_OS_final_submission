@@ -5,6 +5,7 @@ import nachos.machine.Machine;
 import nachos.threads.Condition2;
 import nachos.threads.KThread;
 import nachos.threads.Lock;
+import nachos.threads.PriorityScheduler;
 import nachos.threads.RoundRobinScheduler;
 import nachos.threads.ThreadedKernel;
 
@@ -31,9 +32,10 @@ public class ThreadGrader1 extends BasicTestGrader
   
   public void run ()
   {
-    assertTrue(ThreadedKernel.scheduler instanceof RoundRobinScheduler,
-      "this test requires roundrobin scheduler");
-    
+	//assertTrue(ThreadedKernel.scheduler instanceof RoundRobinScheduler,"this test requires roundrobin scheduler");
+	  
+		assertTrue(ThreadedKernel.scheduler instanceof PriorityScheduler,"this test requires priority scheduler");
+		
     lock = new Lock();
     cond = new Condition2[totalMax];
     for (int i = 0; i < totalMax; ++i)

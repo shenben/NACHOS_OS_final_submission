@@ -10,7 +10,7 @@ import nachos.threads.ThreadedKernel;
 /**
  * Some utilty functions for TestGrader
  * 
- * @author Kang Zhang
+ * @author Isaac
  */
 public abstract class BasicTestGrader extends AutoGrader
 {

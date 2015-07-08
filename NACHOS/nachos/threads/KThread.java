@@ -226,7 +226,6 @@ public class KThread {
 
 	currentThread.status = statusFinished;
 
-	// TASK 1.1
 	KThread waitThread;
 	while ((waitThread = currentThread.threadsJoinedOnMe.nextThread()) != null) {
 		waitThread.ready();
@@ -332,7 +331,7 @@ public class KThread {
 
 		Lib.assertTrue(this != currentThread);
 
-		// TASK 1.1
+
 		boolean intStatus = Machine.interrupt().disable();
 
 		// so the current thread will wait for this thread
@@ -521,7 +520,6 @@ public class KThread {
 	thread2.join(); //thread1 sleeps
 	System.out.println("Join Complete");
 	*/
-	
 	
 	Lib.debug(dbgThread, "End KThread.selfTest");
 	}

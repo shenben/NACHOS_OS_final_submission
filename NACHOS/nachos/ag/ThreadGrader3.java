@@ -3,6 +3,7 @@ package nachos.ag;
 import nachos.machine.Machine;
 import nachos.threads.KThread;
 import nachos.threads.RoundRobinScheduler;
+import nachos.threads.PriorityScheduler;
 import nachos.threads.ThreadedKernel;
 
 /**
@@ -22,9 +23,10 @@ public class ThreadGrader3 extends BasicTestGrader
   
   void run ()
   {
-    assertTrue(ThreadedKernel.scheduler instanceof RoundRobinScheduler,
-      "this test requires roundrobin scheduler");
-    
+    //assertTrue(ThreadedKernel.scheduler instanceof RoundRobinScheduler,"this test requires roundrobin scheduler");
+	  
+	assertTrue(ThreadedKernel.scheduler instanceof PriorityScheduler,"this test requires priority scheduler");
+	
     /* Test ThreadGrader3.a: Tries a join on thread x before x actually runs */
     buf = new StringBuffer();
     ThreadHandler t1 = forkNewThread(new PingTest(1));
