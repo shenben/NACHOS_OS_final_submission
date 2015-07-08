@@ -1,9 +1,0 @@
-Group Thimbles
-6-23-15
-OS CSE150
-
-1.
-(5%, 5 lines) Implement KThread.join(). 
-Note that another thread does not have to call join(), but if it is called, it must be called only once. 
-The result of calling join() a second time on the same thread is undefined, even if the second caller is a different thread than the first caller.
-A thread must finish executing normally whether or not it is joined. 
