@@ -16,7 +16,9 @@ public class Communicator {
 	 * Allocate a new communicator.
 	 */
 	public Communicator() {
+		// the associated lock
 		lock = new Lock();
+		// a list of 
 		Speaker = new LinkedList<ResourceWrapper>();
 		Listener = new LinkedList<ResourceWrapper>();
 	}
@@ -28,6 +30,19 @@ public class Communicator {
 	 * <p>
 	 * Does not return until this thread is paired up with a listening thread.
 	 * Exactly one listener should receive <i>word</i>.
+	 * 
+	 * -----
+	 * Speak takes as input a single integer word to be "spoken." After acquiring
+	 * the lock, speak then checks to see if listeners exist. If they do, interrupts
+	 * are disabled to prevent preemption, and a listener is removed from the store
+	 * of listeners. Interrupts are then re-enabled, and the listeners word is set
+	 * to the supplied message. As the message is now ready, the condition variable
+	 * is called to wake up a waiting thread. 
+	 * 
+	 * If there are no listeners, the speak creates a new speaker,
+	 * sets the appropriate word and adds the speaker to the linke
+	 * list. It then puts the speaker to sleep on the associated
+	 * condition variable, atomically releasing the lock.
 	 * 
 	 * @param word
 	 *            the integer to transfer.
@@ -57,6 +72,17 @@ public class Communicator {
 	 * <i>word</i> that thread passed to <tt>speak()</tt>.
 	 * 
 	 * @return the integer transferred.
+	 * 
+	 * Listen first acquires the lock for the condition variable,
+	 * sets the word to the default value of 0 and checks to see if there are
+	 * any waiting speakers. If there are, it removes the first speaker,
+	 * gets the word and wakes up the next speaker.
+	 * 
+	 * If there are no speakers, a new ResourceWrapper is allocated,
+	 * and the listener is encapsulated within it. The listener then
+	 * puts itself to sleep on the condition variable and sets the current
+	 * word to the initial value.
+	 * 
 	 */
 	public int listen() {
 		lock.acquire();
@@ -84,6 +110,12 @@ public class Communicator {
 	 */
 	private static Lock lock;
 
+	/* ResourceWrapper()
+	 * 
+	 * This class provides a condition variable around a single integer "word,"
+	 * used by threads to communicate with each other.
+	 * 
+	 */
 	private class ResourceWrapper 
 	{
 		int word;
