@@ -338,17 +338,59 @@ public class UserProcess {
     /**
      * Handle the halt() system call. 
      */
+	//make it so halt can only be invoked by root
     private int handleHalt() {
 
-	Machine.halt();
-	
-	Lib.assertNotReached("Machine.halt() did not halt machine!");
-	return 0;
+    	
+    	//how do we know when we are a root process?
+    	if(true)//this!= root process)
+    		return 0;
+    		
+		Machine.halt();
+		Lib.assertNotReached("Machine.halt() did not halt machine!");
+    	return 0;
+    	
     }
-
+    
+    private int handleCreate(){
+    	
+    	return 0;
+    }
+	private int handleExit(){
+	    	
+	    	return 0;
+	    }
+	private int handleExec(){
+		
+		return 0;
+	}
+	private int handleJoin(){
+		
+		return 0;
+	}
+	private int handleOpen(){
+		
+		return 0;
+	}
+	private int handleRead(){
+		
+		return 0;
+	}
+	private int handleWrite(){
+		
+		return 0;
+	}
+	private int handleClose(){
+		
+		return 0;
+	}
+	private int handleUnlink(){
+	
+	return 0;
+	}
 
     private static final int
-        syscallHalt = 0,
+    syscallHalt = 0,
 	syscallExit = 1,
 	syscallExec = 2,
 	syscallJoin = 3,
@@ -391,8 +433,24 @@ public class UserProcess {
 	switch (syscall) {
 	case syscallHalt:
 	    return handleHalt();
-
-
+	case syscallExit:
+		
+	case syscallExec:
+		
+	case syscallJoin:
+		
+	case syscallCreate:
+		
+	case syscallOpen:
+		
+	case syscallRead:
+	
+	case syscallWrite:
+		
+	case syscallClose:
+		
+	case syscallUnlink:
+		
 	default:
 	    Lib.debug(dbgProcess, "Unknown syscall " + syscall);
 	    Lib.assertNotReached("Unknown system call!");
