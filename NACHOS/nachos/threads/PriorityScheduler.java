@@ -354,7 +354,7 @@ public class PriorityScheduler extends Scheduler {
 	    // implement me
 			/*-------------Andrew-------------*/
 		    /*--------------------------------*/
-				waitQueue.waitQueue.remove(thread);
+				waitQueue.waitQueue.remove(thread);	//linkedlist<kthr> 
 				donationQueue.add(waitQueue);
 				effectivePriority = oldEffectivePriority;
 				getEffectivePriority();
