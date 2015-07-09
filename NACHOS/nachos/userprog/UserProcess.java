@@ -352,40 +352,202 @@ public class UserProcess {
     	
     }
     
+    
+    /**
+     * Attempt to open the named disk file, creating it if it does not exist,
+     * and return a file descriptor that can be used to access the file.
+     *
+     * Note that creat() can only be used to create files on disk; creat() will
+     * never return a file descriptor referring to a stream.
+     *
+     * Returns the new file descriptor, or -1 if an error occurred.
+     */
+  
+    
     private int handleCreate(){
-    	
+    	//int creat(char *name);
     	return 0;
     }
+    
+
+/**
+ * Terminate the current process immediately. Any open file descriptors
+ * belonging to the process are closed. Any children of the process no longer
+ * have a parent process.
+ *
+ * status is returned to the parent process as this process's exit status and
+ * can be collected using the join syscall. A process exiting normally should
+ * (but is not required to) set status to 0.
+ *
+ * exit() never returns.
+ */
+
 	private int handleExit(){
-	    	
+	    	//void exit(int status);
 	    	return 0;
 	    }
+
+
+/**
+ * Execute the program stored in the specified file, with the specified
+ * arguments, in a new child process. The child process has a new unique
+ * process ID, and starts with stdin opened as file descriptor 0, and stdout
+ * opened as file descriptor 1.
+ *
+ * file is a null-terminated string that specifies the name of the file
+ * containing the executable. Note that this string must include the ".coff"
+ * extension.
+ *
+ * argc specifies the number of arguments to pass to the child process. This
+ * number must be non-negative.
+ *
+ * argv is an array of pointers to null-terminated strings that represent the
+ * arguments to pass to the child process. argv[0] points to the first
+ * argument, and argv[argc-1] points to the last argument.
+ *
+ * exec() returns the child process's process ID, which can be passed to
+ * join(). On error, returns -1.
+ */
+
+	
 	private int handleExec(){
 		
 		return 0;
 	}
+	
+
+/**
+ * Suspend execution of the current process until the child process specified
+ * by the processID argument has exited. If the child has already exited by the
+ * time of the call, returns immediately. When the current process resumes, it
+ * disowns the child process, so that join() cannot be used on that process
+ * again.
+ *
+ * processID is the process ID of the child process, returned by exec().
+ *
+ * status points to an integer where the exit status of the child process will
+ * be stored. This is the value the child passed to exit(). If the child exited
+ * because of an unhandled exception, the value stored is not defined.
+ *
+ * If the child exited normally, returns 1. If the child exited as a result of
+ * an unhandled exception, returns 0. If processID does not refer to a child
+ * process of the current process, returns -1.
+ */
+
 	private int handleJoin(){
 		
 		return 0;
 	}
+
+
+
+/**
+ * Attempt to open the named file and return a file descriptor.
+ *
+ * Note that open() can only be used to open files on disk; open() will never
+ * return a file descriptor referring to a stream.
+ *
+ * Returns the new file descriptor, or -1 if an error occurred.
+ */
+
 	private int handleOpen(){
-		
+		//int open(char *name);
 		return 0;
 	}
-	private int handleRead(){
-		
-		return 0;
-	}
-	private int handleWrite(){
-		
-		return 0;
-	}
-	private int handleClose(){
-		
-		return 0;
-	}
-	private int handleUnlink(){
 	
+
+/**
+ * Attempt to read up to count bytes into buffer from the file or stream
+ * referred to by fileDescriptor.
+ *
+ * On success, the number of bytes read is returned. If the file descriptor
+ * refers to a file on disk, the file position is advanced by this number.
+ *
+ * It is not necessarily an error if this number is smaller than the number of
+ * bytes requested. If the file descriptor refers to a file on disk, this
+ * indicates that the end of the file has been reached. If the file descriptor
+ * refers to a stream, this indicates that the fewer bytes are actually
+ * available right now than were requested, but more bytes may become available
+ * in the future. Note that read() never waits for a stream to have more data;
+ * it always returns as much as possible immediately.
+ *
+ * On error, -1 is returned, and the new file position is undefined. This can
+ * happen if fileDescriptor is invalid, if part of the buffer is read-only or
+ * invalid, or if a network stream has been terminated by the remote host and
+ * no more data is available.
+ */
+
+	
+	private int handleRead(){
+		//int read(int fileDescriptor, void *buffer, int count);
+		return 0;
+	}
+	
+	/**
+	 * Attempt to write up to count bytes from buffer to the file or stream
+	 * referred to by fileDescriptor. write() can return before the bytes are
+	 * actually flushed to the file or stream. A write to a stream can block,
+	 * however, if kernel queues are temporarily full.
+	 *
+	 * On success, the number of bytes written is returned (zero indicates nothing
+	 * was written), and the file position is advanced by this number. It IS an
+	 * error if this number is smaller than the number of bytes requested. For
+	 * disk files, this indicates that the disk is full. For streams, this
+	 * indicates the stream was terminated by the remote host before all the data
+	 * was transferred.
+	 *
+	 * On error, -1 is returned, and the new file position is undefined. This can
+	 * happen if fileDescriptor is invalid, if part of the buffer is invalid, or
+	 * if a network stream has already been terminated by the remote host.
+	 */
+
+	private int handleWrite(){
+		//int write(int fileDescriptor, void *buffer, int count);
+		return 0;
+	}
+	
+
+/**
+ * Close a file descriptor, so that it no longer refers to any file or stream
+ * and may be reused.
+ *
+ * If the file descriptor refers to a file, all data written to it by write()
+ * will be flushed to disk before close() returns.
+ * If the file descriptor refers to a stream, all data written to it by write()
+ * will eventually be flushed (unless the stream is terminated remotely), but
+ * not necessarily before close() returns.
+ *
+ * The resources associated with the file descriptor are released. If the
+ * descriptor is the last reference to a disk file which has been removed using
+ * unlink, the file is deleted (this detail is handled by the file system
+ * implementation).
+ *
+ * Returns 0 on success, or -1 if an error occurred.
+ */
+
+	
+	private int handleClose(){
+		//int close(int fileDescriptor);
+		return 0;
+	}
+	
+	/**
+	 * Delete a file from the file system. If no processes have the file open, the
+	 * file is deleted immediately and the space it was using is made available for
+	 * reuse.
+	 *
+	 * If any processes still have the file open, the file will remain in existence
+	 * until the last file descriptor referring to it is closed. However, creat()
+	 * and open() will not be able to return new file descriptors for the file
+	 * until it is deleted.
+	 *
+	 * Returns 0 on success, or -1 if an error occurred.
+	 */
+	
+	
+	
+	private int handleUnlink(){
+		//	int unlink(char *name);
 	return 0;
 	}
 
@@ -504,4 +666,13 @@ public class UserProcess {
 	
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
+    
+    /********************////***********/
+    
+    int PID;		//process ID
+    
+    int maxinputArgLength = 256;
+    int maxfilesOpen = 16;
+    
+    
 }
