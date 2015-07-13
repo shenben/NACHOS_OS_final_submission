@@ -340,14 +340,19 @@ public class UserProcess {
      */
 	//make it so halt can only be invoked by root
     private int handleHalt() {
-
-    	
-    	//how do we know when we are a root process?
+    		
+    	/*
     	if(true)//this!= root process)
     		return 0;
     		
 		Machine.halt();
 		Lib.assertNotReached("Machine.halt() did not halt machine!");
+    	return 0;
+    	*/
+    	
+    	Machine.halt();
+    	
+    	Lib.assertNotReached("Machine.halt() did not halt machine!");
     	return 0;
     	
     }
