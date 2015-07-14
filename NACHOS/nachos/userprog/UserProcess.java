@@ -387,10 +387,9 @@ public class UserProcess {
  * exit() never returns.
  */
 
-	private int handleExit(){
-	    	//void exit(int status);
-	    	return 0;
-	    }
+	void handleExit(){
+	    	//void exit(int status);	
+    }
 
 
 /**
@@ -417,7 +416,7 @@ public class UserProcess {
 	
 	private int handleExec(){
 		
-		return 0;
+		//return 0;
 	}
 	
 
