@@ -414,9 +414,9 @@ public class UserProcess {
  */
 
 	
-	private int handleExec(){
+	int handleExec(){
 		
-		//return 0;
+		return 0;
 	}
 	
 
