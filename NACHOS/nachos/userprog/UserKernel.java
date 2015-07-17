@@ -93,6 +93,8 @@ public class UserKernel extends ThreadedKernel {
 	super.run();
 
 	UserProcess process = UserProcess.newUserProcess();
+	////////////******///////////////
+	rootProcess= process;
 	
 	String shellProgram = Machine.getShellProgramName();	
 	Lib.assertTrue(process.execute(shellProgram, new String[] { }));
@@ -112,4 +114,12 @@ public class UserKernel extends ThreadedKernel {
 
     // dummy variables to make javac smarter
     private static Coff dummy1 = null;
+    
+    
+    
+    
+    public static UserProcess rootProcess=null;
+    
+    
+    
 }

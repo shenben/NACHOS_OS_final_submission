@@ -5,6 +5,10 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -310,6 +314,7 @@ public class UserProcess {
      * Release any resources allocated by <tt>loadSections()</tt>.
      */
     protected void unloadSections() {
+    	
     }    
 
     /**
@@ -341,19 +346,13 @@ public class UserProcess {
 	//make it so halt can only be invoked by root
     private int handleHalt() {
     		
-    	/*
-    	if(true)//this!= root process)
+    	
+    	if(this!= UserKernel.rootProcess)
     		return 0;
-    		
+    	
 		Machine.halt();
 		Lib.assertNotReached("Machine.halt() did not halt machine!");
-    	return 0;
-    	*/
-    	
-    	Machine.halt();
-    	
-    	Lib.assertNotReached("Machine.halt() did not halt machine!");
-    	return 0;
+    	return -1;
     	
     }
     
@@ -369,9 +368,25 @@ public class UserProcess {
      */
   
     
-    private int handleCreate(){
+    private int handleCreate(int a0, int maxinputArgLength){
+    	
+    	String name = readVirtualMemoryString(a0, maxinputArgLength );
+    	
+    	if(name == null)	
+    		return -1;
+    	
     	//int creat(char *name);
+    	
+    	OpenFile file = UserKernel.fileSystem.open(name, true);
+    	
+    	if (file == null) {
+			Lib.debug(dbgProcess, "Create file failed");
+			return -1;
+		}
+
+    	//return file descriptor
     	return 0;
+		//return descriptorManager.add(file);	
     }
     
 
@@ -387,8 +402,29 @@ public class UserProcess {
  * exit() never returns.
  */
 
-	void handleExit(){
-	    	//void exit(int status);	
+	private void handleExit(int status){	
+		//close all files
+		for(int i=0; i<16; i++)
+		
+		{
+			handleClose(i);		
+			
+		}
+		
+		//check children
+		/******/
+		
+		/******/
+		
+		//current process. end
+		this.unloadSections();		//remove memory allocation
+		if(this == UserKernel.rootProcess)
+			Machine.halt();
+		else
+		{
+			KThread.finish();
+			Lib.assertNotReached("Thread finished unsuccessfully");
+		}
     }
 
 
@@ -414,7 +450,7 @@ public class UserProcess {
  */
 
 	
-	int handleExec(){
+	int handleExec(int name,int argc,int argv){
 		
 		return 0;
 	}
@@ -438,7 +474,7 @@ public class UserProcess {
  * process of the current process, returns -1.
  */
 
-	private int handleJoin(){
+	private int handleJoin(int pid, int status){
 		
 		return 0;
 	}
@@ -454,7 +490,7 @@ public class UserProcess {
  * Returns the new file descriptor, or -1 if an error occurred.
  */
 
-	private int handleOpen(){
+	private int handleOpen(int name){
 		//int open(char *name);
 		return 0;
 	}
@@ -482,7 +518,7 @@ public class UserProcess {
  */
 
 	
-	private int handleRead(){
+	private int handleRead(int fID, int buffer, int count){
 		//int read(int fileDescriptor, void *buffer, int count);
 		return 0;
 	}
@@ -505,7 +541,7 @@ public class UserProcess {
 	 * if a network stream has already been terminated by the remote host.
 	 */
 
-	private int handleWrite(){
+	private int handleWrite(int fid, int buffer, int count){
 		//int write(int fileDescriptor, void *buffer, int count);
 		return 0;
 	}
@@ -530,7 +566,7 @@ public class UserProcess {
  */
 
 	
-	private int handleClose(){
+	private int handleClose(int fid){
 		//int close(int fileDescriptor);
 		return 0;
 	}
@@ -547,10 +583,7 @@ public class UserProcess {
 	 *
 	 * Returns 0 on success, or -1 if an error occurred.
 	 */
-	
-	
-	
-	private int handleUnlink(){
+	private int handleUnlink(int name){
 		//	int unlink(char *name);
 	return 0;
 	}
@@ -600,22 +633,23 @@ public class UserProcess {
 	case syscallHalt:
 	    return handleHalt();
 	case syscallExit:
-		
+		handleExit(a0);
 	case syscallExec:
-		
+		return handleExec(a0,a1,a2);
 	case syscallJoin:
-		
+		return handleJoin(a0, a1);
 	case syscallCreate:
-		
+		return handleCreate(a0,a1);
 	case syscallOpen:
-		
+		return handleOpen(a0);
 	case syscallRead:
-	
+		return handleRead(a0,a1,a2);
 	case syscallWrite:
-		
+		return handleWrite(a0,a1,a2);
 	case syscallClose:
-		
+		return handleClose(a0);
 	case syscallUnlink:
+		return handleUnlink(a0);
 		
 	default:
 	    Lib.debug(dbgProcess, "Unknown syscall " + syscall);
@@ -675,8 +709,10 @@ public class UserProcess {
     
     int PID;		//process ID
     
-    int maxinputArgLength = 256;
+    int maxFileNameLength = 256;
     int maxfilesOpen = 16;
     
+    private HashMap<Integer, OpenFile> openfiles;
     
+ 
 }
