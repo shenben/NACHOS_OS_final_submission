@@ -5,10 +5,14 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
+<<<<<<< Updated upstream
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
+=======
+import java.util.LinkedList;
+>>>>>>> Stashed changes
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -705,12 +709,35 @@ public class UserProcess {
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
     
-    /********************////***********/
+    /***************variables added****************/
     
-    int PID;		//process ID
+    private int PID;		//process ID
     
+    private static int maxinputArgLength = 256;			//filename size
+    public OpenFile[] processFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
+    
+    private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
+    
+    private int ppid;	//parent id
+    
+    
+    
+    //The file descriptor should be a nonnegative 
+    //integer that is simply used to index into a table of currently-open files by
+    //that process.
+    protected int fileDescriptor;
+    /* When a process is created, two streams are already open. File descriptor 0
+     * refers to keyboard input (UNIX stdin), and file descriptor 1 refers to
+     * display output (UNIX stdout). File descriptor 0 can be read, and file
+     * descriptor 1 can be written, without previous calls to open().
+     */
+    
+    
+<<<<<<< Updated upstream
     int maxFileNameLength = 256;
     int maxfilesOpen = 16;
+=======
+>>>>>>> Stashed changes
     
     private HashMap<Integer, OpenFile> openfiles;
     
