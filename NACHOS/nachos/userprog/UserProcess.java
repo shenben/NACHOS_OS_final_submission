@@ -346,15 +346,11 @@ public class UserProcess {
      */
 	//make it so halt can only be invoked by root
     private int handleHalt() {
-    		
-    	
     	if(this!= UserKernel.rootProcess)
     		return 0;
-    	
 		Machine.halt();
 		Lib.assertNotReached("Machine.halt() did not halt machine!");
     	return -1;
-    	
     }
     
     
@@ -370,15 +366,14 @@ public class UserProcess {
   
     
     private int handleCreate(int a0, int maxinputArgLength){
-    	
     	String name = readVirtualMemoryString(a0, maxinputArgLength );
     	
-    	if(name == null)	
-    		return -1;
+    	//if(name != null)	//exists already
+    	//	handleOpen(a0);
     	
-    	//int creat(char *name);
-    	
-    	OpenFile file = UserKernel.fileSystem.open(name, true);
+    	//filesystem open, create if needed
+    	OpenFile file = UserKernel.fileSystem.open(name, true);	
+    	//describe file [#fileID, #fileDescriptor]
     	
     	if (file == null) {
 			Lib.debug(dbgProcess, "Create file failed");
@@ -406,16 +401,15 @@ public class UserProcess {
 	private void handleExit(int status){	
 		//close all files
 		for(int i=0; i<16; i++)
-		
 		{
-			handleClose(i);		
-			
+			handleClose(i);
 		}
 		
 		//check children
-		/******/
-		
-		/******/
+		for(int child: this.childProcesses)
+		{
+			//child.ppid = 0;			//parent ID removed
+		}	
 		
 		//current process. end
 		this.unloadSections();		//remove memory allocation
@@ -423,7 +417,7 @@ public class UserProcess {
 			Machine.halt();
 		else
 		{
-			KThread.finish();
+			UThread.finish();
 			Lib.assertNotReached("Thread finished unsuccessfully");
 		}
     }
@@ -451,9 +445,31 @@ public class UserProcess {
  */
 
 	
-	int handleExec(int name,int argc,int argv){
+	private int handleExec(int file,int argc,int argv){
+		//get file
+		String fileName = readVirtualMemoryString(file, maxinputArgLength);
+		if (fileName == null || !fileName.endsWith(".coff")) 
+		{
+			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
+			return -1;
+		}
+		if (argc < 0) 			//must be non negative
+		{	
+			Lib.debug(dbgProcess, "argc < 0");
+			return -1;
+		}
+		
+		///////execute stuffff
+		
+		//create child
+		//add to current processes children
+		
+		//save current state
+		
+		//execute child
 		
 		return 0;
+		//return child.PID
 	}
 	
 
@@ -477,6 +493,21 @@ public class UserProcess {
 
 	private int handleJoin(int pid, int status){
 		
+		//check this current processes children for the pid
+			//return -1 if no child exists
+		//remove child from current childProcess list
+		
+		//create new process 	(copy child)
+		
+		//check copy !=null		(child may be terminated)
+			//return -1
+		
+		//child executes till termination
+		
+		//write the childs status to virtual memory
+		
+		//if exit normal
+			//return 1;
 		return 0;
 	}
 
@@ -492,8 +523,38 @@ public class UserProcess {
  */
 
 	private int handleOpen(int name){
-		//int open(char *name);
-		return 0;
+		String fileName = readVirtualMemoryString(name, maxinputArgLength);
+		
+		if (fileName == null) 
+		{
+			Lib.debug(dbgProcess, "Invalid file name pointer");
+			return -1;
+		}
+		
+		if(processesOpenFiles[15] !=null)
+		{
+			Lib.debug(dbgProcess, "max files open already!");
+			return -1;
+		}
+
+		OpenFile file = UserKernel.fileSystem.open(fileName, false);
+
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file name");
+			return -1;
+		}
+		
+		//the file is now open, add it to our processesOpenFiles.
+		for(int i=0; i<=16; i++)
+		{
+			if(processesOpenFiles[i] == null)
+			{
+				processesOpenFiles[i] = file;
+				fileDescriptor = i;
+				break;
+			}
+		}
+		return fileDescriptor;
 	}
 	
 
@@ -520,8 +581,31 @@ public class UserProcess {
 
 	
 	private int handleRead(int fID, int buffer, int count){
-		//int read(int fileDescriptor, void *buffer, int count);
-		return 0;
+		OpenFile file = processesOpenFiles[fID]; //get file
+		
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file descriptor");
+			return -1;
+		}
+
+		if (!(buffer >= 0 && count >= 0)) {
+			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
+			return -1;
+		}
+
+		byte buf[] = new byte[count];
+
+		//read
+		int length = file.read(buf, 0, count);
+
+		if (length == -1) {
+			Lib.debug(dbgProcess, "Fail to read from file");
+			return -1;
+		}
+		
+		//do we need to write to virtual memory?
+
+		return length;
 	}
 	
 	/**
@@ -543,8 +627,31 @@ public class UserProcess {
 	 */
 
 	private int handleWrite(int fid, int buffer, int count){
-		//int write(int fileDescriptor, void *buffer, int count);
-		return 0;
+		OpenFile file  = processesOpenFiles[fid];
+		
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file descriptor");
+			return -1;
+		}
+
+		if (!(buffer >= 0 && count >= 0)) 
+		{
+			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
+			return -1;
+		}
+		
+		byte buf[] = new byte[count];		//set #count bytes.
+		
+		//read virtual memory and write to specified array
+		int length = readVirtualMemory(buffer, buf, 0, count);
+		length = file.write(buf, 0, length);	//write to file.
+
+		if(length < count)
+		{
+			Lib.debug(dbgProcess, "did not write all of requested bytes");
+			return -1;
+		}
+		return length;	//return count of what was written
 	}
 	
 
@@ -568,7 +675,7 @@ public class UserProcess {
 
 	
 	private int handleClose(int fid){
-		//int close(int fileDescriptor);
+		processesOpenFiles[fid].close();
 		return 0;
 	}
 	
@@ -585,8 +692,24 @@ public class UserProcess {
 	 * Returns 0 on success, or -1 if an error occurred.
 	 */
 	private int handleUnlink(int name){
-		//	int unlink(char *name);
-	return 0;
+		
+		String fileName = readVirtualMemoryString(name, maxinputArgLength);
+		
+		if (fileName == null) {
+			Lib.debug(dbgProcess, "Invalid file name pointer");
+			return -1;
+		}
+		
+		
+		//check that no process has this file open.
+			//delete
+		
+		
+		
+		
+		
+		
+		return 0;
 	}
 
     private static final int
@@ -711,13 +834,17 @@ public class UserProcess {
     private int PID;		//process ID
     
     private static int maxinputArgLength = 256;			//filename size
-    public OpenFile[] processFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
     
-    private LinkedList<UserProcess> children = new LinkedList<UserProcess>();
+    //this processes files
+    public OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
+       
+ 	
+    protected HashSet<Integer> childProcesses;    
     
     private int ppid;	//parent id
     
-    
+    /*Each file that a process has opened should have a 
+     * unique file descriptor associated with it*/ 
     
     //The file descriptor should be a nonnegative 
     //integer that is simply used to index into a table of currently-open files by
@@ -728,6 +855,14 @@ public class UserProcess {
      * display output (UNIX stdout). File descriptor 0 can be read, and file
      * descriptor 1 can be written, without previous calls to open().
      */
+    
+    
+    
+    //all files, with a count of how many processes refer to them
+    protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
+    
+    
+    
     
     
  

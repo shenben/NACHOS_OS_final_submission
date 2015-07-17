@@ -95,6 +95,7 @@ public class UserKernel extends ThreadedKernel {
 	UserProcess process = UserProcess.newUserProcess();
 	////////////******///////////////
 	rootProcess= process;
+	////////////******///////////////
 	
 	String shellProgram = Machine.getShellProgramName();	
 	Lib.assertTrue(process.execute(shellProgram, new String[] { }));
@@ -116,10 +117,6 @@ public class UserKernel extends ThreadedKernel {
     private static Coff dummy1 = null;
     
     
-    
-    
     public static UserProcess rootProcess=null;
-    
-    
     
 }
