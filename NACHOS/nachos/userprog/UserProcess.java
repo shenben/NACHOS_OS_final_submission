@@ -5,14 +5,11 @@ import nachos.threads.*;
 import nachos.userprog.*;
 
 import java.io.EOFException;
-<<<<<<< Updated upstream
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
-=======
 import java.util.LinkedList;
->>>>>>> Stashed changes
 
 /**
  * Encapsulates the state of a user process that is not contained in its
@@ -732,14 +729,6 @@ public class UserProcess {
      * descriptor 1 can be written, without previous calls to open().
      */
     
-    
-<<<<<<< Updated upstream
-    int maxFileNameLength = 256;
-    int maxfilesOpen = 16;
-=======
->>>>>>> Stashed changes
-    
-    private HashMap<Integer, OpenFile> openfiles;
     
  
 }
