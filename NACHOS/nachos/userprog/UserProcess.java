@@ -368,23 +368,39 @@ public class UserProcess {
     private int handleCreate(int a0, int maxinputArgLength){
     	String name = readVirtualMemoryString(a0, maxinputArgLength );
     	
-    	//if(name != null)	//exists already
-    	//	handleOpen(a0);
+    	if(name == null)	//exists already
+    	{
+    		Lib.debug(dbgProcess, "invalid name pointer");
+    		return -1;
+    	}   	
     	
     	//filesystem open, create if needed
     	OpenFile file = UserKernel.fileSystem.open(name, true);	
-    	//describe file [#fileID, #fileDescriptor]
+    	/*
+    	 * Probably will need some sort of imported OBJECT like hashset
+    	 * describe file [#fileID, #fileDescriptor]
+    	*/
     	
+   	 	//check creation
     	if (file == null) {
 			Lib.debug(dbgProcess, "Create file failed");
 			return -1;
 		}
+    	
+    	//add to open files
+    	for(int i=0; i<=16; i++)
+		{
+			if(processesOpenFiles[i] == null)
+			{
+				processesOpenFiles[i] = file;
+				fileDescriptor = i;
+				break;
+			}
+		}
 
     	//return file descriptor
-    	return 0;
-		//return descriptorManager.add(file);	
+    	return fileDescriptor;	
     }
-    
 
 /**
  * Terminate the current process immediately. Any open file descriptors
@@ -406,10 +422,10 @@ public class UserProcess {
 		}
 		
 		//check children
-		for(int child: this.childProcesses)
+		for(UserProcess child: childProcesses)		
 		{
-			//child.ppid = 0;			//parent ID removed
-		}	
+			child.ppid = 0;				//parent id ==0
+		}
 		
 		//current process. end
 		this.unloadSections();		//remove memory allocation
@@ -492,22 +508,40 @@ public class UserProcess {
  */
 
 	private int handleJoin(int pid, int status){
-		
+		UserProcess selectChild = null; 
 		//check this current processes children for the pid
 			//return -1 if no child exists
-		//remove child from current childProcess list
-		
-		//create new process 	(copy child)
-		
+		for(UserProcess child: childProcesses)		
+		{
+			if(child.PID == pid)
+			{
+				selectChild = child;				//create new process 	(copy child)
+				childProcesses.remove(child);		//remove child from current childProcess list
+			}	
+			Lib.debug(dbgProcess, "Child doesn't exist");
+			return -1;
+		}
+
 		//check copy !=null		(child may be terminated)
-			//return -1
+		//return -1
+		if(selectChild == null)
+		{
+			return -1;
+		}
 		
+		//save current state
+		this.saveState();
+		
+		boolean check;
 		//child executes till termination
+	    check = execute(selectChild.toString(), null);
 		
 		//write the childs status to virtual memory
 		
-		//if exit normal
-			//return 1;
+		
+	    if(check)
+	    	return 1;
+	    Lib.debug(dbgProcess, "Child didn't execute normally");
 		return 0;
 	}
 
@@ -839,7 +873,7 @@ public class UserProcess {
     public OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
        
  	
-    protected HashSet<Integer> childProcesses;    
+    protected HashSet<UserProcess> childProcesses;    
     
     private int ppid;	//parent id
     
