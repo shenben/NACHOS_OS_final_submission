@@ -363,16 +363,15 @@ public class UserProcess {
      *
      * Returns the new file descriptor, or -1 if an error occurred.
      */
-  
-    
-    private int handleCreate(int a0, int maxinputArgLength){
+    private int handleCreate(int a0, int maxinputArgLength)
+    {
     	String name = readVirtualMemoryString(a0, maxinputArgLength );
     	
     	if(name == null)	//exists already
     	{
     		Lib.debug(dbgProcess, "invalid name pointer");
     		return -1;
-    	}   	
+    	}
     	
     	//filesystem open, create if needed
     	OpenFile file = UserKernel.fileSystem.open(name, true);	
@@ -414,7 +413,8 @@ public class UserProcess {
  * exit() never returns.
  */
 
-	private void handleExit(int status){	
+	private void handleExit(int status)
+	{	
 		//close all files
 		for(int i=0; i<16; i++)
 		{
@@ -422,7 +422,7 @@ public class UserProcess {
 		}
 		
 		//check children
-		for(UserProcess child: childProcesses)		
+		for(int child: childProcesses)		
 		{
 			child.ppid = 0;				//parent id ==0
 		}
@@ -438,111 +438,73 @@ public class UserProcess {
 		}
     }
 
+	 private int handleJoin(int processID, int status){
+	    	
+	    	if (!childProcesses.contains(processID)){
+	    		Lib.debug(dbgProcess,"not the right child");
+	    		return -1;
+	    	}
+	    	
+ 	childProcesses.remove(processID);
 
-/**
- * Execute the program stored in the specified file, with the specified
- * arguments, in a new child process. The child process has a new unique
- * process ID, and starts with stdin opened as file descriptor 0, and stdout
- * opened as file descriptor 1.
- *
- * file is a null-terminated string that specifies the name of the file
- * containing the executable. Note that this string must include the ".coff"
- * extension.
- *
- * argc specifies the number of arguments to pass to the child process. This
- * number must be non-negative.
- *
- * argv is an array of pointers to null-terminated strings that represent the
- * arguments to pass to the child process. argv[0] points to the first
- * argument, and argv[argc-1] points to the last argument.
- *
- * exec() returns the child process's process ID, which can be passed to
- * join(). On error, returns -1.
- */
+		UserProcess child = allProcesses.get(processID);
 
-	
-	private int handleExec(int file,int argc,int argv){
-		//get file
-		String fileName = readVirtualMemoryString(file, maxinputArgLength);
-		if (fileName == null || !fileName.endsWith(".coff")) 
-		{
-			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
-			return -1;
-		}
-		if (argc < 0) 			//must be non negative
-		{	
-			Lib.debug(dbgProcess, "argc < 0");
-			return -1;
-		}
-		
-		///////execute stuffff
-		
-		//create child
-		//add to current processes children
-		
-		//save current state
-		
-		//execute child
-		
-		return 0;
-		//return child.PID
-	}
-	
-
-/**
- * Suspend execution of the current process until the child process specified
- * by the processID argument has exited. If the child has already exited by the
- * time of the call, returns immediately. When the current process resumes, it
- * disowns the child process, so that join() cannot be used on that process
- * again.
- *
- * processID is the process ID of the child process, returned by exec().
- *
- * status points to an integer where the exit status of the child process will
- * be stored. This is the value the child passed to exit(). If the child exited
- * because of an unhandled exception, the value stored is not defined.
- *
- * If the child exited normally, returns 1. If the child exited as a result of
- * an unhandled exception, returns 0. If processID does not refer to a child
- * process of the current process, returns -1.
- */
-
-	private int handleJoin(int pid, int status){
-		UserProcess selectChild = null; 
-		//check this current processes children for the pid
-			//return -1 if no child exists
-		for(UserProcess child: childProcesses)		
-		{
-			if(child.PID == pid)
+			if (child == null) 
 			{
-				selectChild = child;				//create new process 	(copy child)
-				childProcesses.remove(child);		//remove child from current childProcess list
-			}	
-			Lib.debug(dbgProcess, "Child doesn't exist");
-			return -1;
+				Lib.debug(dbgProcess, "join a exited process");
+				child = terminatedProcesses.get(processID);
+					if (child == null) {
+						Lib.debug(dbgProcess, "error in join");
+						return -1;
+					}
+			}
+
+		child.Terminated.P();
+
+		writeVirtualMemory(status, Lib.bytesFromInt(child.status));
+
+			if (child.exitNormally)
+				return 1;
+ 	
+ 	return 0;
+ }
+ 
+	protected int handleExec(int file, int argc, int argv) {
+		String fileName = readVirtualMemoryString(file, maxFileNameLength);
+
+			if (fileName == null || !fileName.endsWith(".coff")) {
+				Lib.debug(dbgProcess, "Invalid file name in handleExec()");
+				return -1;
+			}
+	
+			if (argc < 0) {
+				Lib.debug(dbgProcess, "argc < 0");
+				return -1;
+			}
+
+		String[] args = new String[argc];
+		byte[] buffer = new byte[4];
+
+			for (int i = 0; i < argc; i++) {
+				if (readVirtualMemory(argv + i * 4, buffer) != 4)
+					return -1;
+				args[i] = readVirtualMemoryString(Lib.bytesToInt(buffer, 0),
+						maxFileNameLength);
+				if (args[i] == null)
+					return -1;
 		}
 
-		//check copy !=null		(child may be terminated)
-		//return -1
-		if(selectChild == null)
-		{
-			return -1;
+		UserProcess child = newUserProcess();
+		childProcesses.add(child.processID);
+
+		saveState();
+
+			if (!child.execute(fileName, args)) {
+				Lib.debug(dbgProcess, "fail to execute child process");
+				return -1;
 		}
-		
-		//save current state
-		this.saveState();
-		
-		boolean check;
-		//child executes till termination
-	    check = execute(selectChild.toString(), null);
-		
-		//write the childs status to virtual memory
-		
-		
-	    if(check)
-	    	return 1;
-	    Lib.debug(dbgProcess, "Child didn't execute normally");
-		return 0;
+
+		return child.processID;
 	}
 
 
@@ -556,7 +518,8 @@ public class UserProcess {
  * Returns the new file descriptor, or -1 if an error occurred.
  */
 
-	private int handleOpen(int name){
+	private int handleOpen(int name)
+	{
 		String fileName = readVirtualMemoryString(name, maxinputArgLength);
 		
 		if (fileName == null) 
@@ -614,7 +577,8 @@ public class UserProcess {
  */
 
 	
-	private int handleRead(int fID, int buffer, int count){
+	private int handleRead(int fID, int buffer, int count)
+	{
 		OpenFile file = processesOpenFiles[fID]; //get file
 		
 		if (file == null) {
@@ -660,7 +624,8 @@ public class UserProcess {
 	 * if a network stream has already been terminated by the remote host.
 	 */
 
-	private int handleWrite(int fid, int buffer, int count){
+	private int handleWrite(int fid, int buffer, int count)
+	{
 		OpenFile file  = processesOpenFiles[fid];
 		
 		if (file == null) {
@@ -708,7 +673,8 @@ public class UserProcess {
  */
 
 	
-	private int handleClose(int fid){
+	private int handleClose(int fid)
+	{
 		processesOpenFiles[fid].close();
 		return 0;
 	}
@@ -725,7 +691,8 @@ public class UserProcess {
 	 *
 	 * Returns 0 on success, or -1 if an error occurred.
 	 */
-	private int handleUnlink(int name){
+	private int handleUnlink(int name)
+	{
 		
 		String fileName = readVirtualMemoryString(name, maxinputArgLength);
 		
@@ -873,7 +840,7 @@ public class UserProcess {
     public OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
        
  	
-    protected HashSet<UserProcess> childProcesses;    
+    //protected HashSet<UserProcess> childProcesses;    
     
     private int ppid;	//parent id
     
@@ -890,14 +857,24 @@ public class UserProcess {
      * descriptor 1 can be written, without previous calls to open().
      */
     
-    
-    
     //all files, with a count of how many processes refer to them
     protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
     
-    
-    
-    
-    
- 
+    /*---------Andrew--------*/
+   	///////////////////////////
+   	///////////////////////////
+   	/*---------Andrew--------*/
+       protected int status;
+       protected int processID;
+       protected int processNumber = 0;
+       protected Semaphore Terminated;
+       protected HashSet<Integer> childProcesses;
+       protected boolean exitNormally = true;
+       protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
+   	   protected static Hashtable<Integer, UserProcess> terminatedProcesses = new Hashtable<Integer, UserProcess>();
+   	   protected static final int maxFileNameLength = 256;
+    /*---------Andrew--------*/
+   	///////////////////////////
+   	///////////////////////////
+   	/*---------Andrew--------*/
 }
