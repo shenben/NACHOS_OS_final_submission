@@ -341,13 +341,36 @@ public class UserProcess {
 	processor.writeRegister(Processor.regA1, argv);
     }
 
+    
+    //look at userkernel for testing purposes
+    public static void selfTest()
+    {
+    	
+    	UserProcess proc1 = newUserProcess();
+    	//handleExec()
+    	
+    	//create file[0]
+    	proc1.handleCreate(0,0);
+    	
+    	//close file
+    	//proc1.processesOpenFiles[0].close();
+    	proc1.handleClose(0);
+    	
+    	//open file[0]
+    	proc1.handleOpen(0);
+    	
+    	//unlink file[0]
+    	proc1.handleUnlink(0);
+    }
+    
     /**
      * Handle the halt() system call. 
      */
 	//make it so halt can only be invoked by root
     private int handleHalt() {
-    	if(this!= UserKernel.rootProcess)
+    	if(this.processID != 0)
     		return 0;
+    	
 		Machine.halt();
 		Lib.assertNotReached("Machine.halt() did not halt machine!");
     	return -1;
@@ -367,7 +390,7 @@ public class UserProcess {
     {
     	String name = readVirtualMemoryString(a0, maxinputArgLength );
     	
-    	if(name == null)	//exists already
+    	if(name == null)	
     	{
     		Lib.debug(dbgProcess, "invalid name pointer");
     		return -1;
@@ -421,10 +444,10 @@ public class UserProcess {
 			handleClose(i);
 		}
 		
-		//check children
-		for(int child: childProcesses)		
+		//check children, set all to orphan 
+		for(UserProcess child : childProcesses)
 		{
-			child.ppid = 0;				//parent id ==0
+			child.parent = null;
 		}
 		
 		//current process. end
@@ -445,7 +468,7 @@ public class UserProcess {
 	    		return -1;
 	    	}
 	    	
- 	childProcesses.remove(processID);
+	    childProcesses.remove(processID);
 
 		UserProcess child = allProcesses.get(processID);
 
@@ -468,7 +491,8 @@ public class UserProcess {
  	
  	return 0;
  }
- 
+	 
+	 
 	protected int handleExec(int file, int argc, int argv) {
 		String fileName = readVirtualMemoryString(file, maxFileNameLength);
 
@@ -495,7 +519,8 @@ public class UserProcess {
 		}
 
 		UserProcess child = newUserProcess();
-		childProcesses.add(child.processID);
+		childProcesses.add(child);
+		//childProcesses.add(child.processID);
 
 		saveState();
 
@@ -705,11 +730,6 @@ public class UserProcess {
 		//check that no process has this file open.
 			//delete
 		
-		
-		
-		
-		
-		
 		return 0;
 	}
 
@@ -831,18 +851,12 @@ public class UserProcess {
     private static final char dbgProcess = 'a';
     
     /***************variables added****************/
-    
-    private int PID;		//process ID
-    
     private static int maxinputArgLength = 256;			//filename size
     
     //this processes files
     public OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
-       
  	
     //protected HashSet<UserProcess> childProcesses;    
-    
-    private int ppid;	//parent id
     
     /*Each file that a process has opened should have a 
      * unique file descriptor associated with it*/ 
@@ -857,9 +871,9 @@ public class UserProcess {
      * descriptor 1 can be written, without previous calls to open().
      */
     
-    //all files, with a count of how many processes refer to them
-    protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
+    HashMap<Integer, UserProcess> parent = null;
     
+    private static UserProcess currentProcess = null;
     /*---------Andrew--------*/
    	///////////////////////////
    	///////////////////////////
@@ -868,7 +882,7 @@ public class UserProcess {
        protected int processID;
        protected int processNumber = 0;
        protected Semaphore Terminated;
-       protected HashSet<Integer> childProcesses;
+       protected HashSet<UserProcess> childProcesses;
        protected boolean exitNormally = true;
        protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
    	   protected static Hashtable<Integer, UserProcess> terminatedProcesses = new Hashtable<Integer, UserProcess>();
