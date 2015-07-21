@@ -35,7 +35,7 @@ public class UserKernel extends ThreadedKernel {
     public void selfTest() {
 	super.selfTest();
 	
-	UserProcess.selfTest();	//tests the file system
+	//UserProcess.selfTest();	//tests the file system
 	//UserProcess.selfTest2();	//tests multiprocessing calls
 	
 	System.out.println("Testing the console device. Typed characters");
@@ -98,6 +98,7 @@ public class UserKernel extends ThreadedKernel {
 	super.run();
 
 	UserProcess process = UserProcess.newUserProcess();
+	
 	////////////******///////////////
 	rootProcess= process;
 	////////////******///////////////

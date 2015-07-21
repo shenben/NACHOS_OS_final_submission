@@ -28,6 +28,13 @@ public class UserProcess {
      * Allocate a new process.
      */
     public UserProcess() {
+    	
+    	//////andrew
+    	childProcesses = new HashSet <Integer>();
+    	
+    	
+    	
+    	
 	int numPhysPages = Machine.processor().getNumPhysPages();
 	pageTable = new TranslationEntry[numPhysPages];
 	for (int i=0; i<numPhysPages; i++)
@@ -396,6 +403,12 @@ public class UserProcess {
     		return -1;
     	}
     	
+    	if(deleted.contains(name))
+    	{
+    		Lib.debug(dbgProcess, "being deleted");
+    		return -1;
+    	}
+    	
     	//filesystem open, create if needed
     	OpenFile file = UserKernel.fileSystem.open(name, true);	
     	/*
@@ -415,13 +428,22 @@ public class UserProcess {
 			if(processesOpenFiles[i] == null)
 			{
 				processesOpenFiles[i] = file;
-				fileDescriptor = i;
-				break;
+				if(files.get(file.getName()) !=null)
+					files.put(file.getName(),  files.get(file.getName()) +1);
+				else
+				{
+					files.put(file.getName(), 1);
+				}
+				//fileDescriptor = i;
+				//break;
+				
+				return i;
 			}
+			
 		}
-
+    	return -1;
     	//return file descriptor
-    	return fileDescriptor;	
+    //	return fileDescriptor;	
     }
 
 /**
@@ -445,9 +467,9 @@ public class UserProcess {
 		}
 		
 		//check children, set all to orphan 
-		for(UserProcess child : childProcesses)
+		for(int child : childProcesses)
 		{
-			child.parent = null;
+			//child.parent = null;
 		}
 		
 		//current process. end
@@ -493,18 +515,19 @@ public class UserProcess {
  }
 	 
 	 
-	protected int handleExec(int file, int argc, int argv) {
+	protected int handleExec(int file, int argc, int argv) 
+	{
 		String fileName = readVirtualMemoryString(file, maxFileNameLength);
 
-			if (fileName == null || !fileName.endsWith(".coff")) {
-				Lib.debug(dbgProcess, "Invalid file name in handleExec()");
-				return -1;
-			}
-	
-			if (argc < 0) {
-				Lib.debug(dbgProcess, "argc < 0");
-				return -1;
-			}
+		if (fileName == null || !fileName.endsWith(".coff")) {
+			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
+			return -1;
+		}
+
+		if (argc < 0) {
+			Lib.debug(dbgProcess, "argc < 0");
+			return -1;
+		}
 
 		String[] args = new String[argc];
 		byte[] buffer = new byte[4];
@@ -518,18 +541,25 @@ public class UserProcess {
 					return -1;
 		}
 
-		UserProcess child = newUserProcess();
-		childProcesses.add(child);
-		//childProcesses.add(child.processID);
-
+		UserProcess child = newUserProcess();		
+	
+		//childProcesses.add(child);				//null pointer exception here
+		
+		//childProcesses.add(newUserProcess());
+		childProcesses.add(child.processID);
+		
 		saveState();
 
-			if (!child.execute(fileName, args)) {
-				Lib.debug(dbgProcess, "fail to execute child process");
-				return -1;
+		/*
+		if (!child.execute(fileName, args)) 
+		{
+			Lib.debug(dbgProcess, "fail to execute child process");
+			return -1;
 		}
-
-		return child.processID;
+		*/
+		
+		//return child.processID;
+		return 0;
 	}
 
 
@@ -553,6 +583,7 @@ public class UserProcess {
 			return -1;
 		}
 		
+		
 		if(processesOpenFiles[15] !=null)
 		{
 			Lib.debug(dbgProcess, "max files open already!");
@@ -566,17 +597,32 @@ public class UserProcess {
 			return -1;
 		}
 		
+		if(deleted.contains(fileName))
+		{
+			Lib.debug(dbgProcess, "being deleted");
+			return -1;
+		}
+		
 		//the file is now open, add it to our processesOpenFiles.
 		for(int i=0; i<=16; i++)
 		{
 			if(processesOpenFiles[i] == null)
 			{
 				processesOpenFiles[i] = file;
-				fileDescriptor = i;
-				break;
+				if(files.get(file.getName()) !=null)
+					files.put(file.getName(),  files.get(file.getName()) +1);
+				else
+				{
+					files.put(file.getName(), 1);
+				}
+				//fileDescriptor = i;
+				//break;
+				
+				return i;
 			}
+			
 		}
-		return fileDescriptor;
+    	return -1;
 	}
 	
 
@@ -700,7 +746,27 @@ public class UserProcess {
 	
 	private int handleClose(int fid)
 	{
-		processesOpenFiles[fid].close();
+		if(processesOpenFiles[fid] ==null)
+		{
+			Lib.debug(dbgProcess, "file does not exist");
+			return -1;
+		}
+		OpenFile file = processesOpenFiles[fid];
+		processesOpenFiles[fid] = null;
+		file.close();
+
+		String fileName = file.getName();
+
+		if (files.get(fileName) > 1)
+			files.put(fileName, files.get(fileName) - 1);
+		else {
+			files.remove(fileName);
+			if (deleted.contains(fileName)) {
+				deleted.remove(fileName);
+				UserKernel.fileSystem.remove(fileName);
+			}
+		}
+
 		return 0;
 	}
 	
@@ -850,13 +916,18 @@ public class UserProcess {
     private static final int pageSize = Processor.pageSize;
     private static final char dbgProcess = 'a';
     
+    
+    
+    /***************variables added****************/
+    /***************variables added****************/
     /***************variables added****************/
     private static int maxinputArgLength = 256;			//filename size
     
     //this processes files
-    public OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
+    private OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
  	
     //protected HashSet<UserProcess> childProcesses;    
+    public static int maxFileLimit= 16;
     
     /*Each file that a process has opened should have a 
      * unique file descriptor associated with it*/ 
@@ -864,7 +935,7 @@ public class UserProcess {
     //The file descriptor should be a nonnegative 
     //integer that is simply used to index into a table of currently-open files by
     //that process.
-    protected int fileDescriptor;
+    //private int fileDescriptor;
     /* When a process is created, two streams are already open. File descriptor 0
      * refers to keyboard input (UNIX stdin), and file descriptor 1 refers to
      * display output (UNIX stdout). File descriptor 0 can be read, and file
@@ -882,7 +953,7 @@ public class UserProcess {
        protected int processID;
        protected int processNumber = 0;
        protected Semaphore Terminated;
-       protected HashSet<UserProcess> childProcesses;
+       protected HashSet<Integer> childProcesses;
        protected boolean exitNormally = true;
        protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
    	   protected static Hashtable<Integer, UserProcess> terminatedProcesses = new Hashtable<Integer, UserProcess>();
@@ -891,4 +962,72 @@ public class UserProcess {
    	///////////////////////////
    	///////////////////////////
    	/*---------Andrew--------*/
+   	   
+   	   
+   	protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
+   	protected static HashSet<String> deleted = new HashSet<String>();
+	public class DescriptorManager
+	{
+		public OpenFile descriptor[] = new OpenFile[maxFileLimit];
+	
+		public int add(int index, OpenFile file) {
+			if (index < 0 || index >= maxFileLimit)
+				return -1;
+	
+			if (descriptor[index] == null) {
+				descriptor[index] = file;
+				if (files.get(file.getName()) != null) {
+					files.put(file.getName(), files.get(file.getName()) + 1);
+				}
+				else {
+					files.put(file.getName(), 1);
+				}
+				return index;
+			}
+	
+			return -1;
+		}
+	
+		public int add(OpenFile file) {
+			for (int i = 0; i < maxFileLimit; i++)
+				if (descriptor[i] == null)
+					return add(i, file);
+	
+			return -1;
+		}
+	
+		public int close(int fileDescriptor) {
+			if (descriptor[fileDescriptor] == null) {
+				Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
+						+ " doesn't exist");
+				return -1;
+			}
+	
+			OpenFile file = descriptor[fileDescriptor];
+			descriptor[fileDescriptor] = null;
+			file.close();
+	
+			String fileName = file.getName();
+	
+			if (files.get(fileName) > 1)
+				files.put(fileName, files.get(fileName) - 1);
+			else {
+				files.remove(fileName);
+				if (deleted.contains(fileName)) 
+				{
+					deleted.remove(fileName);
+					UserKernel.fileSystem.remove(fileName);
+				}
+			}
+	
+			return 0;
+		}
+	
+		public OpenFile get(int fileDescriptor) {
+			if (fileDescriptor < 0 || fileDescriptor >= maxFileLimit)
+				return null;
+			return descriptor[fileDescriptor];
+		}
+	}
+
 }
