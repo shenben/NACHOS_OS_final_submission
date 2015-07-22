@@ -1,9 +1,13 @@
 package nachos.userprog;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Queue;
+
 import nachos.machine.*;
 import nachos.threads.*;
 import nachos.userprog.*;
-import java.util.Queue;
+
 
 /**
  * A kernel that can support multiple user processes.
@@ -25,15 +29,28 @@ public class UserKernel extends ThreadedKernel {
 
 	console = new SynchConsole(Machine.console());
 	
+	/***************************************/
+	pagelock= new Lock();
+	
+	freePages = new freeQueue();
+	
+	for (int i = 0; i < Machine.processor().getNumPhysPages(); i++)
+		freePages.add(i);
+	/*****************************************/
+	
 	Machine.processor().setExceptionHandler(new Runnable() {
 		public void run() { exceptionHandler(); }
 	    });
+	
     }
 
     /**
      * Test the console device.
      */	
     public void selfTest() {
+    
+    
+	/*
 	super.selfTest();
 	
 	//UserProcess.selfTest();	//tests the file system
@@ -53,6 +70,7 @@ public class UserKernel extends ThreadedKernel {
 	
 	
 	System.out.println("");
+	*/
     }
 
     /**
@@ -119,12 +137,12 @@ public class UserKernel extends ThreadedKernel {
     }
     
     /*---------------Lenny Code---------------*/
-   	/*---------------Lenny Code---------------*/
+   	/*---------------Lenny Code vvvvvvvvvv---------------*/
 	public static int[] allocatePages(int num) {
-		listLock.acquire();
+		pagelock.acquire();
 
 		if (freePages.size() < num) {
-			listLock.release();
+			pagelock.release();
 			return null;
 		}
 
@@ -133,41 +151,158 @@ public class UserKernel extends ThreadedKernel {
 		for (int i = 0; i < num; i++)
 			result[i] = freePages.remove();
 
-		listLock.release();
+		
+		
+		pagelock.release();
 
 		return result;
 	}
 
 	public static void releasePage(int ppn) {
-		listLock.acquire();
+		pagelock.acquire();
 		freePages.add(ppn);
-		listLock.release();
+		pagelock.release();
 	}
-    /*---------------Lenny Code---------------*/
+    /*---------------Lenny Code^^^^^^^^^^^^^---------------*/
    	/*---------------Lenny Code---------------*/
-
-    
-    
-
+	
     /** Globally accessible reference to the synchronized console. */
     public static SynchConsole console;
 
     // dummy variables to make javac smarter
-    private static Coff dummy1 = null;
-    
+    //private static Coff dummy1 = null;
     
     public static UserProcess rootProcess=null;
     
     
     
     /*---------------Lenny Code---------------*/
-	/*---------------Lenny Code---------------*/
+    /*---------------Lenny Code vvvvvvvvvv---------------*/
     /** A global linked list of free physical pages. */
-	public static Queue<Integer> freePages;
-	public static Lock listLock;
-	/*---------------Lenny Code---------------*/
-	/*---------------Lenny Code---------------*/
+    
+	public static freeQueue freePages;
+	public static Lock pagelock;
+	
 
     
-    
+	public class freeQueue implements Queue<Integer>
+	{
+		Queue<Integer> freePages;
+		
+		@Override
+		public boolean addAll(Collection<? extends Integer> arg0) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public void clear() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean contains(Object o) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean containsAll(Collection<?> c) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isEmpty() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public Iterator<Integer> iterator() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean remove(Object o) {
+			// TODO Auto-generated method stub
+			
+			
+			return false;
+		}
+
+		@Override
+		public boolean removeAll(Collection<?> c) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean retainAll(Collection<?> c) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public int size() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public Object[] toArray() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public <T> T[] toArray(T[] a) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean add(Integer e) {
+			// TODO Auto-generated method stub
+			
+			return false;
+		}
+
+		@Override
+		public Integer element() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public boolean offer(Integer e) {
+			// TODO Auto-generated method stub
+			
+			return false;
+		}
+
+		@Override
+		public Integer peek() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Integer poll() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Integer remove() {
+			// TODO Auto-generated method stub
+			
+			return null;
+		}
+		
+	}
+	/*---------------Lenny Code^^^^^^^^^^^^^---------------*/
+	/*---------------Lenny Code---------------*/
 }

@@ -458,8 +458,9 @@ public class UserProcess {
      * Handle the halt() system call. 
      */
 	//make it so halt can only be invoked by root
-    private int handleHalt() {
-    	if(this.processID != 0)
+    private int handleHalt() 
+    {
+    	if(this.processID != 0)		//Landon
     		return 0;
     	
 		Machine.halt();
