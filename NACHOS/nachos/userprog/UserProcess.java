@@ -30,15 +30,26 @@ public class UserProcess {
     public UserProcess() {
     	
     	//////andrew
+    	processID = processNumber++;
     	childProcesses = new HashSet <Integer>();
+    	processesOpenFiles = new OpenFile[maxFileLimit];
+    	allProcesses.put(processID, this);
+    	Terminated= new Semaphore(0);
     	
     	
-    	
-    	
-	int numPhysPages = Machine.processor().getNumPhysPages();
-	pageTable = new TranslationEntry[numPhysPages];
-	for (int i=0; i<numPhysPages; i++)
-	    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
+		int numPhysPages = Machine.processor().getNumPhysPages();
+		pageTable = new TranslationEntry[numPhysPages];
+		for (int i=0; i<numPhysPages; i++)
+		    pageTable[i] = new TranslationEntry(i,i, true,false,false,false);
+		
+		//landon
+		
+		//i/o
+		processesOpenFiles[0] = UserKernel.console.openForReading();
+			files.put(processesOpenFiles[0].getName(), 1);
+		
+		processesOpenFiles[1] = UserKernel.console.openForWriting();
+			files.put(processesOpenFiles[1].getName(), 1);
     }
     
     /**
@@ -442,7 +453,7 @@ public class UserProcess {
     	//handleExec()
     	
     	//create file[0]
-    	proc1.handleCreate(0,0);
+    	proc1.handleCreate(0);
     	
     	//close file
     	//proc1.processesOpenFiles[0].close();
@@ -459,7 +470,7 @@ public class UserProcess {
      * Handle the halt() system call. 
      */
 	//make it so halt can only be invoked by root
-    private int handleHalt() 
+    protected int handleHalt() 
     {
     	if(this.processID != 0)		//Landon
     		return 0;
@@ -479,7 +490,7 @@ public class UserProcess {
      *
      * Returns the new file descriptor, or -1 if an error occurred.
      */
-    private int handleCreate(int a0, int maxinputArgLength)
+    protected int handleCreate(int a0)
     {
     	String name = readVirtualMemoryString(a0, maxinputArgLength );
     	
@@ -497,6 +508,7 @@ public class UserProcess {
     	
     	//filesystem open, create if needed
     	OpenFile file = UserKernel.fileSystem.open(name, true);	
+    	
     	/*
     	 * Probably will need some sort of imported OBJECT like hashset
     	 * describe file [#fileID, #fileDescriptor]
@@ -509,27 +521,23 @@ public class UserProcess {
 		}
     	
     	//add to open files
-    	for(int i=0; i<=16; i++)
+    	for(int i=0; i<16; i++)
 		{
 			if(processesOpenFiles[i] == null)
 			{
 				processesOpenFiles[i] = file;
 				if(files.get(file.getName()) !=null)
+				{
 					files.put(file.getName(),  files.get(file.getName()) +1);
+				}
 				else
 				{
 					files.put(file.getName(), 1);
 				}
-				//fileDescriptor = i;
-				//break;
-				
 				return i;
 			}
-			
 		}
-    	return -1;
-    	//return file descriptor
-    //	return fileDescriptor;	
+    	return -1;	
     }
 
 /**
@@ -544,32 +552,31 @@ public class UserProcess {
  * exit() never returns.
  */
 
-	private void handleExit(int status)
+    protected void handleExit(int status)
 	{	
-		//close all files
-		for(int i=0; i<16; i++)
+		this.status = status;
+		
+		for (int i = 2; i < 16; i++)
 		{
 			handleClose(i);
 		}
 		
-		//check children, set all to orphan 
-		for(int child : childProcesses)
-		{
-			//child.parent = null;
-		}
-		
-		//current process. end
-		this.unloadSections();		//remove memory allocation
-		if(this == UserKernel.rootProcess)
-			Machine.halt();
-		else
-		{
-			UThread.finish();
-			Lib.assertNotReached("Thread finished unsuccessfully");
-		}
+		unloadSections();
+
+		allProcesses.remove(processID);
+		terminatedProcesses.put(processID, this);
+
+		Terminated.V();
+
+		if (allProcesses.isEmpty())
+			Kernel.kernel.terminate();
+
+		UThread.finish();
+
+		//return 0;
     }
 
-	 private int handleJoin(int processID, int status){
+	 protected int handleJoin(int processID, int status){
 	    	
 	    	if (!childProcesses.contains(processID)){
 	    		Lib.debug(dbgProcess,"not the right child");
@@ -597,7 +604,7 @@ public class UserProcess {
 			if (child.exitNormally)
 				return 1;
  	
- 	return 0;
+			return 0;
  }
 	 
 	 
@@ -659,7 +666,7 @@ public class UserProcess {
  * Returns the new file descriptor, or -1 if an error occurred.
  */
 
-	private int handleOpen(int name)
+	protected int handleOpen(int name)
 	{
 		String fileName = readVirtualMemoryString(name, maxinputArgLength);
 		
@@ -668,7 +675,6 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "Invalid file name pointer");
 			return -1;
 		}
-		
 		
 		if(processesOpenFiles[15] !=null)
 		{
@@ -690,7 +696,7 @@ public class UserProcess {
 		}
 		
 		//the file is now open, add it to our processesOpenFiles.
-		for(int i=0; i<=16; i++)
+		for(int i=0; i<16; i++)
 		{
 			if(processesOpenFiles[i] == null)
 			{
@@ -734,7 +740,7 @@ public class UserProcess {
  */
 
 	
-	private int handleRead(int fID, int buffer, int count)
+	protected int handleRead(int fID, int buffer, int count)
 	{
 		OpenFile file = processesOpenFiles[fID]; //get file
 		
@@ -781,7 +787,7 @@ public class UserProcess {
 	 * if a network stream has already been terminated by the remote host.
 	 */
 
-	private int handleWrite(int fid, int buffer, int count)
+	protected int handleWrite(int fid, int buffer, int count)
 	{
 		OpenFile file  = processesOpenFiles[fid];
 		
@@ -830,7 +836,7 @@ public class UserProcess {
  */
 
 	
-	private int handleClose(int fid)
+	protected int handleClose(int fid)
 	{
 		if(processesOpenFiles[fid] ==null)
 		{
@@ -868,7 +874,7 @@ public class UserProcess {
 	 *
 	 * Returns 0 on success, or -1 if an error occurred.
 	 */
-	private int handleUnlink(int name)
+	protected int handleUnlink(int name)
 	{
 		
 		String fileName = readVirtualMemoryString(name, maxinputArgLength);
@@ -877,7 +883,6 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "Invalid file name pointer");
 			return -1;
 		}
-		
 		
 		//check that no process has this file open.
 			//delete
@@ -936,7 +941,7 @@ public class UserProcess {
 	case syscallJoin:
 		return handleJoin(a0, a1);
 	case syscallCreate:
-		return handleCreate(a0,a1);
+		return handleCreate(a0);
 	case syscallOpen:
 		return handleOpen(a0);
 	case syscallRead:
@@ -1010,7 +1015,7 @@ public class UserProcess {
     private static int maxinputArgLength = 256;			//filename size
     
     //this processes files
-    private OpenFile[] processesOpenFiles = new OpenFile[16];	//array of "file that supports reading, writing, and seeking."
+    private OpenFile[] processesOpenFiles;// = new OpenFile[maxFileLimit];	//array of "file that supports reading, writing, and seeking."
  	
     //protected HashSet<UserProcess> childProcesses;    
     public static int maxFileLimit= 16;
@@ -1044,6 +1049,7 @@ public class UserProcess {
        protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
    	   protected static Hashtable<Integer, UserProcess> terminatedProcesses = new Hashtable<Integer, UserProcess>();
    	   protected static final int maxFileNameLength = 256;
+   	   protected FileDescriptorManager descriptorManager;
     /*---------Andrew--------*/
    	///////////////////////////
    	///////////////////////////
@@ -1052,11 +1058,13 @@ public class UserProcess {
    	   
    	protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
    	protected static HashSet<String> deleted = new HashSet<String>();
-	public class DescriptorManager
+	
+   	public class FileDescriptorManager
 	{
 		public OpenFile descriptor[] = new OpenFile[maxFileLimit];
 	
-		public int add(int index, OpenFile file) {
+		public int add(int index, OpenFile file) 
+		{
 			if (index < 0 || index >= maxFileLimit)
 				return -1;
 	
@@ -1074,7 +1082,8 @@ public class UserProcess {
 			return -1;
 		}
 	
-		public int add(OpenFile file) {
+		public int add(OpenFile file) 
+		{
 			for (int i = 0; i < maxFileLimit; i++)
 				if (descriptor[i] == null)
 					return add(i, file);
@@ -1082,7 +1091,8 @@ public class UserProcess {
 			return -1;
 		}
 	
-		public int close(int fileDescriptor) {
+		public int close(int fileDescriptor) 
+		{
 			if (descriptor[fileDescriptor] == null) {
 				Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
 						+ " doesn't exist");
@@ -1109,7 +1119,8 @@ public class UserProcess {
 			return 0;
 		}
 	
-		public OpenFile get(int fileDescriptor) {
+		public OpenFile get(int fileDescriptor) 
+		{
 			if (fileDescriptor < 0 || fileDescriptor >= maxFileLimit)
 				return null;
 			return descriptor[fileDescriptor];
