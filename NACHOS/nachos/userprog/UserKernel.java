@@ -3,6 +3,7 @@ package nachos.userprog;
 import nachos.machine.*;
 import nachos.threads.*;
 import nachos.userprog.*;
+import java.util.Queue;
 
 /**
  * A kernel that can support multiple user processes.
@@ -108,6 +109,7 @@ public class UserKernel extends ThreadedKernel {
 
 	KThread.currentThread().finish();
     }
+    
 
     /**
      * Terminate this kernel. Never returns.
@@ -115,6 +117,37 @@ public class UserKernel extends ThreadedKernel {
     public void terminate() {
 	super.terminate();
     }
+    
+    /*---------------Lenny Code---------------*/
+   	/*---------------Lenny Code---------------*/
+	public static int[] allocatePages(int num) {
+		listLock.acquire();
+
+		if (freePages.size() < num) {
+			listLock.release();
+			return null;
+		}
+
+		int[] result = new int[num];
+
+		for (int i = 0; i < num; i++)
+			result[i] = freePages.remove();
+
+		listLock.release();
+
+		return result;
+	}
+
+	public static void releasePage(int ppn) {
+		listLock.acquire();
+		freePages.add(ppn);
+		listLock.release();
+	}
+    /*---------------Lenny Code---------------*/
+   	/*---------------Lenny Code---------------*/
+
+    
+    
 
     /** Globally accessible reference to the synchronized console. */
     public static SynchConsole console;
@@ -124,5 +157,17 @@ public class UserKernel extends ThreadedKernel {
     
     
     public static UserProcess rootProcess=null;
+    
+    
+    
+    /*---------------Lenny Code---------------*/
+	/*---------------Lenny Code---------------*/
+    /** A global linked list of free physical pages. */
+	public static Queue<Integer> freePages;
+	public static Lock listLock;
+	/*---------------Lenny Code---------------*/
+	/*---------------Lenny Code---------------*/
+
+    
     
 }
