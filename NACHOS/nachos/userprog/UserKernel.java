@@ -182,12 +182,11 @@ public class UserKernel extends ThreadedKernel {
     
 	public static freeQueue freePages;
 	public static Lock pagelock;
-	
 
     
 	public class freeQueue implements Queue<Integer>
 	{
-		Queue<Integer> freePages;
+		Queue<Integer> freeP;
 		
 		@Override
 		public boolean addAll(Collection<? extends Integer> arg0) {
@@ -265,9 +264,10 @@ public class UserKernel extends ThreadedKernel {
 
 		@Override
 		public boolean add(Integer e) {
-			// TODO Auto-generated method stub
-			
-			return false;
+			freeP.add(e);
+			if(!freeP.contains(e))
+				return false;
+			return true;
 		}
 
 		@Override
@@ -297,9 +297,10 @@ public class UserKernel extends ThreadedKernel {
 
 		@Override
 		public Integer remove() {
-			// TODO Auto-generated method stub
+			if(freeP.isEmpty())
+				return null;
+			return freeP.poll();
 			
-			return null;
 		}
 		
 	}
