@@ -155,14 +155,15 @@ public class UserProcess {
 	if (entry == null)
 	    return 0;
 	
-	//int amount = Math.min(length, memory.length-vaddr); Oldcode
-	//System.arraycopy(memory, vaddr, data, offset, amount); Old code
+	//int amount = Math.min(length, memory.length-vaddr); //Oldcode
+	//System.arraycopy(memory, vaddr, data, offset, amount);//Old code
 	int amount = Math.min(length, pageSize - firstOffset);
 	System.arraycopy(memory, Processor.makeAddress(entry.ppn, firstOffset),
 			data, offset, amount);
 	offset += amount;
 
-	for (int i = firstVPN + 1; i <= lastVPN; i++) {
+	for (int i = firstVPN + 1; i <= lastVPN; i++) 
+	{
 		entry = getTranslationEntry(i, false);
 		if (entry == null)
 			return amount;
