@@ -542,12 +542,16 @@ public class UserProcess {
 
 		if (files.containsKey(fileName)) 
 		{
+<<<<<<< HEAD
 			Lib.debug(dbgProcess, "File added to delete list");
+=======
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 			deleted.add(fileName);
 		}
 		else 
 		{
 			if (!UserKernel.fileSystem.remove(fileName))
+<<<<<<< HEAD
 			{
 				Lib.debug(dbgProcess, "file not found in system");
 				return -1;
@@ -587,6 +591,45 @@ public class UserProcess {
 	protected int handleRead(int fileDescriptor, int buffer, int count) {
 		OpenFile file = descriptorManager.get(fileDescriptor);
 
+=======
+				return -1;
+		}
+		
+		UserKernel.fileSystem.remove(fileName);
+		Lib.debug(dbgProcess, "File successfully unlinked");
+		return 0;
+	}
+
+	protected int handleClose(int fileDescriptor) {
+		return descriptorManager.close(fileDescriptor);
+	}
+
+	protected int handleWrite(int fileDescriptor, int buffer, int count) {
+		OpenFile file = descriptorManager.get(fileDescriptor);
+
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file descriptor");
+			return -1;
+		}
+
+		if (!(buffer >= 0 && count >= 0)) {
+			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
+			return -1;
+		}
+
+		byte buf[] = new byte[count];
+
+		int length = readVirtualMemory(buffer, buf, 0, count);
+
+		length = file.write(buf, 0, length);
+		Lib.debug(dbgProcess, "wrote to file okay:" + (char) buffer);
+		return length;
+	}
+
+	protected int handleRead(int fileDescriptor, int buffer, int count) {
+		OpenFile file = descriptorManager.get(fileDescriptor);
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 		if (file == null) {
 			Lib.debug(dbgProcess, "Invalid file descriptor");
 			return -1;
@@ -680,6 +723,7 @@ public class UserProcess {
 				return -1;
 			}
 		}
+<<<<<<< HEAD
 
 		child.finished.P();
 
@@ -697,6 +741,22 @@ public class UserProcess {
 	protected int handleExec(int file, int argc, int argv) {
 		String fileName = readVirtualMemoryString(file, maxFileNameLength);
 		
+=======
+
+		child.finished.P();
+
+		writeVirtualMemory(status, Lib.bytesFromInt(child.status));
+
+		if (child.exitNormally)
+			return 1;
+		else
+			return 0;
+	}
+
+	protected int handleExec(int file, int argc, int argv) {
+		String fileName = readVirtualMemoryString(file, maxFileNameLength);
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 		if (fileName == null || !fileName.endsWith(".coff")) {
 			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
 			return -1;
@@ -729,12 +789,19 @@ public class UserProcess {
 			return -1;
 		}
 
+<<<<<<< HEAD
 		Lib.debug(dbgProcess, "returning child processID");
 		return child.PID;
 	}
 
 	protected int handleExit(int status) 
 	{
+=======
+		return child.PID;
+	}
+
+	protected int handleExit(int status) {
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 		this.status = status;
 		
 		for (int i = 2; i < maxFileDescriptorNum; i++)
@@ -799,10 +866,17 @@ public class UserProcess {
 //			Lib.assertNotReached("Unexpected exception");
 		}
 	}
+<<<<<<< HEAD
 
 	public class DescriptorManager {
 		public OpenFile descriptor[] = new OpenFile[maxFileDescriptorNum];
 
+=======
+
+	public class DescriptorManager {
+		public OpenFile descriptor[] = new OpenFile[maxFileDescriptorNum];
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 		public int add(int index, OpenFile file) {
 			if (index < 0 || index >= maxFileDescriptorNum)
 				return -1;
@@ -847,8 +921,12 @@ public class UserProcess {
 			OpenFile file = descriptor[fileDescriptor];
 			descriptor[fileDescriptor] = null;
 			file.close();
+<<<<<<< HEAD
 			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
 					+ " closed, starting cleanup");
+=======
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 			String fileName = file.getName();
 
 			if (files.get(fileName) > 1)
@@ -856,15 +934,24 @@ public class UserProcess {
 			else 
 			{
 				files.remove(fileName);
+<<<<<<< HEAD
 				if (deleted.contains(fileName)) 
 				{
 					Lib.debug(dbgProcess, "calling deleted list.clear()");
+=======
+				if (deleted.contains(fileName)) {
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 					deleted.remove(fileName);
 					UserKernel.fileSystem.remove(fileName);
 				}
 			}
 			
+<<<<<<< HEAD
 			
+=======
+			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
+					+ " closed");
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 			return 0;
 		}
 

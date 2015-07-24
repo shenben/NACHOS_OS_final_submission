@@ -1,10 +1,14 @@
 package nachos.userprog;
 
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
+=======
+import java.util.LinkedList;
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 
 import nachos.machine.*;
 import nachos.threads.*;
@@ -19,6 +23,7 @@ public class UserKernel extends ThreadedKernel {
 	public UserKernel() {
 		super();
 	}
+<<<<<<< HEAD
 
 	/**
 	 * Initialize this kernel. Creates a synchronized console and sets the
@@ -45,6 +50,30 @@ public class UserKernel extends ThreadedKernel {
 		});
 	}
 
+=======
+
+	/**
+	 * Initialize this kernel. Creates a synchronized console and sets the
+	 * processor's exception handler.
+	 */
+	public void initialize(String[] args) {
+		super.initialize(args);
+
+		console = new SynchConsole(Machine.console());
+
+		listLock = new Lock();
+		freePages = new LinkedList<Integer>();
+		for (int i = 0; i < Machine.processor().getNumPhysPages(); i++)
+			freePages.add(i);
+
+		Machine.processor().setExceptionHandler(new Runnable() {
+			public void run() {
+				exceptionHandler();
+			}
+		});
+	}
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 	/**
 	 * Test the console device.
 	 */
@@ -126,8 +155,12 @@ public class UserKernel extends ThreadedKernel {
 	public static int[] allocatePages(int num) {
 		listLock.acquire();
 
+<<<<<<< HEAD
 		if (freePages.size() < num) 	//if we don't have enough to allocate
 		{
+=======
+		if (freePages.size() < num) {
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 			listLock.release();
 			return null;
 		}
@@ -135,12 +168,17 @@ public class UserKernel extends ThreadedKernel {
 		int[] result = new int[num];
 
 		for (int i = 0; i < num; i++)
+<<<<<<< HEAD
 		{
 			//freePages.
 			
 			//result[i] = freePages.remove(0);
 			result[i] = freePages.remove(freePages.size()-1);
 		}
+=======
+			result[i] = freePages.remove();
+
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 		listLock.release();
 
 		return result;
@@ -159,6 +197,7 @@ public class UserKernel extends ThreadedKernel {
 	public static UserProcess rootProcess = null;
 
 	/** A global linked list of free physical pages. */
+<<<<<<< HEAD
 	//public static LinkedList<Integer> freePages;
 	
 	
@@ -168,4 +207,8 @@ public class UserKernel extends ThreadedKernel {
 	
 	
 	
+=======
+	public static LinkedList<Integer> freePages;
+	public static Lock listLock;
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 }

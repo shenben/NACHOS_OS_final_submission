@@ -21,7 +21,10 @@ int main()
 	     //int unlink(char *name);
 	     unlink(myFile);
 
+<<<<<<< HEAD
 	     close(2);
 
+=======
+>>>>>>> df3a34201247d1d436ef5fe8028e12e39cc6abe4
 	    /* not reached */
 }
