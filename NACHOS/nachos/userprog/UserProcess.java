@@ -538,15 +538,23 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "Invalid file name pointer");
 			return -1;
 		}
+		
 
-		if (files.containsKey(fileName)) {
+		if (files.containsKey(fileName)) 
+		{
+			Lib.debug(dbgProcess, "File added to delete list");
 			deleted.add(fileName);
 		}
-		else {
+		else 
+		{
 			if (!UserKernel.fileSystem.remove(fileName))
+			{
+				Lib.debug(dbgProcess, "file not found in system");
 				return -1;
+			}
 		}
-
+		
+		//Lib.debug(dbgProcess, "File successfully unlinked");
 		return 0;
 	}
 
@@ -572,7 +580,7 @@ public class UserProcess {
 		int length = readVirtualMemory(buffer, buf, 0, count);
 
 		length = file.write(buf, 0, length);
-		Lib.debug(dbgProcess, "wrote to file okay:" );
+		Lib.debug(dbgProcess, "wrote to file okay:" + (char) buffer);
 		return length;
 	}
 
@@ -678,14 +686,17 @@ public class UserProcess {
 		writeVirtualMemory(status, Lib.bytesFromInt(child.status));
 
 		if (child.exitNormally)
+		{
+			Lib.debug(dbgProcess, "in handleJoin:child exited normally");
 			return 1;
+		}
 		else
 			return 0;
 	}
 
 	protected int handleExec(int file, int argc, int argv) {
 		String fileName = readVirtualMemoryString(file, maxFileNameLength);
-
+		
 		if (fileName == null || !fileName.endsWith(".coff")) {
 			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
 			return -1;
@@ -718,10 +729,12 @@ public class UserProcess {
 			return -1;
 		}
 
+		Lib.debug(dbgProcess, "returning child processID");
 		return child.PID;
 	}
 
-	protected int handleExit(int status) {
+	protected int handleExit(int status) 
+	{
 		this.status = status;
 		
 		for (int i = 2; i < maxFileDescriptorNum; i++)
@@ -834,20 +847,24 @@ public class UserProcess {
 			OpenFile file = descriptor[fileDescriptor];
 			descriptor[fileDescriptor] = null;
 			file.close();
-
+			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
+					+ " closed, starting cleanup");
 			String fileName = file.getName();
 
 			if (files.get(fileName) > 1)
 				files.put(fileName, files.get(fileName) - 1);
-			else {
+			else 
+			{
 				files.remove(fileName);
-				if (deleted.contains(fileName)) {
+				if (deleted.contains(fileName)) 
+				{
+					Lib.debug(dbgProcess, "calling deleted list.clear()");
 					deleted.remove(fileName);
 					UserKernel.fileSystem.remove(fileName);
 				}
 			}
-			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
-					+ " closed");
+			
+			
 			return 0;
 		}
 

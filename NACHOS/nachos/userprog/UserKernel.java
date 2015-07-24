@@ -1,6 +1,10 @@
 package nachos.userprog;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Queue;
 
 import nachos.machine.*;
 import nachos.threads.*;
@@ -26,7 +30,11 @@ public class UserKernel extends ThreadedKernel {
 		console = new SynchConsole(Machine.console());
 
 		listLock = new Lock();
-		freePages = new LinkedList<Integer>();
+		
+		//freePages = new LinkedList<Integer>();
+		
+		freePages = new ArrayList<Integer>();
+		
 		for (int i = 0; i < Machine.processor().getNumPhysPages(); i++)
 			freePages.add(i);
 
@@ -118,7 +126,8 @@ public class UserKernel extends ThreadedKernel {
 	public static int[] allocatePages(int num) {
 		listLock.acquire();
 
-		if (freePages.size() < num) {
+		if (freePages.size() < num) 	//if we don't have enough to allocate
+		{
 			listLock.release();
 			return null;
 		}
@@ -126,8 +135,12 @@ public class UserKernel extends ThreadedKernel {
 		int[] result = new int[num];
 
 		for (int i = 0; i < num; i++)
-			result[i] = freePages.remove();
-
+		{
+			//freePages.
+			
+			//result[i] = freePages.remove(0);
+			result[i] = freePages.remove(freePages.size()-1);
+		}
 		listLock.release();
 
 		return result;
@@ -146,6 +159,13 @@ public class UserKernel extends ThreadedKernel {
 	public static UserProcess rootProcess = null;
 
 	/** A global linked list of free physical pages. */
-	public static LinkedList<Integer> freePages;
+	//public static LinkedList<Integer> freePages;
+	
+	
 	public static Lock listLock;
+	
+	public static ArrayList<Integer> freePages;
+	
+	
+	
 }

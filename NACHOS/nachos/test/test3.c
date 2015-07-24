@@ -20,7 +20,7 @@ int main()
 	     int a=200;
 
 	     int * buff;
-
+	     buff = &a;
 	     int count = 4;
 
 	     //int write(int fileDescriptor, void *buffer, int count);

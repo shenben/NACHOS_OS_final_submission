@@ -5,6 +5,10 @@ import nachos.machine.*;
 import java.util.TreeSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Random;
+
+//import PriorityScheduler.PriorityQueue;
+//import PriorityScheduler.ThreadState;
 
 /**
  * A scheduler that chooses threads using a lottery.
@@ -26,11 +30,13 @@ import java.util.Iterator;
  * Unlike a priority scheduler, these tickets add (as opposed to just taking
  * the maximum).
  */
+/*-------------Isaac Flores------------------*/
 public class LotteryScheduler extends PriorityScheduler {
     /**
      * Allocate a new lottery scheduler.
      */
     public LotteryScheduler() {
+    	
     }
     
     /**
@@ -41,8 +47,86 @@ public class LotteryScheduler extends PriorityScheduler {
      *					to the owning thread.
      * @return	a new lottery thread queue.
      */
-    public ThreadQueue newThreadQueue(boolean transferPriority) {
-	// implement me
-	return null;
-    }
+    /*public ThreadQueue newThreadQueue(boolean transferPriority) {
+    	return new PriorityQueue(transferPriority); //same as priority scheduler
+    }*/
+    /**
+     * The default priority for a new thread. Do not change this value.
+     */
+    public static final int priorityDefault = 1;
+    /**
+     * The minimum priority that a thread can have. Do not change this value.
+     */
+    public static final int priorityMinimum = 1;
+    /**
+     * The maximum priority that a thread can have. Do not change this value.
+     */
+    public static final int priorityMaximum = Integer.MAX_VALUE;
+    
+    protected static int totalTickets;
+    
+    
+    
+    protected ThreadState pickNextThread() {
+    	totalTickets = 0;
+    	PriorityQueue pQueue = null;
+    	Random rnd = new Random();
+    	rnd.setSeed(0);
+    	
+    	
+    	for(KThread current : pQueue.waitQueue){
+    		totalTickets += getEffectivePriority(current);//this is really inefficient
+    	}
+	    // implement me
+		/*-------------Andrew-------------*/
+	    /*-------------Isaac--------------*/
+			KThread nextThread;
+			//int winner = Machine.timer.getTime()%totalTickets;
+			int winner = rnd.nextInt();
+			nextThread = this.pickNextThread().thread;
+			//winning "ticket" must be less than the total tickets in the system
+			
+				for (KThread thread : pQueue.waitQueue){//increment by each thread through waitQueue
+					if (nextThread == null|| getEffectivePriority(thread) < winner) {
+						//Finding the thread with the highest priority to set to nextThread
+							nextThread = thread;
+						//subtract this thread's tickets from winner. this guarantees a winner
+							winner -= getEffectivePriority(thread);
+					}
+				
+					else{
+						totalTickets -= getEffectivePriority(thread);
+						return getThreadState(thread);
+					}
+			//return null was taken out, we need to return the next thread we picked
+		/*-------------Andrew-------------*/
+	    /*-------------Isaac--------------*/
+				}
+				return null;//we should get here iff waitQueue is empty
+	}
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
