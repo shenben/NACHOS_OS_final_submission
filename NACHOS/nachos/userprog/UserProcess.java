@@ -800,81 +800,6 @@ public class UserProcess {
 		}
 	}
 
-	public class DescriptorManager {
-		public OpenFile descriptor[] = new OpenFile[maxFileDescriptorNum];
-
-		public int add(int index, OpenFile file) {
-			if (index < 0 || index >= maxFileDescriptorNum)
-				return -1;
-
-			if (descriptor[index] == null) {
-				descriptor[index] = file;
-				if (files.get(file.getName()) != null) {
-					files.put(file.getName(), files.get(file.getName()) + 1);
-				}
-				else {
-					files.put(file.getName(), 1);
-				}
-				Lib.debug(dbgProcess, "fileName: " + descriptor[index].getName()
-						+ " added with iterator:"+index);
-				return index;
-			}
-
-			return -1;
-		}
-
-		public int add(OpenFile file) {
-			for (int i = 0; i < maxFileDescriptorNum; i++)
-				if (descriptor[i] == null)
-					return add(i, file);
-
-			return -1;
-		}
-
-		public int close(int fileDescriptor) {
-			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
-			{
-				Lib.debug(dbgProcess, "file descriptor out of bounds");
-				return -1;
-			}
-			
-			if (descriptor[fileDescriptor] == null) {
-				Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
-						+ " doesn't exist");
-				return -1;
-			}
-
-			OpenFile file = descriptor[fileDescriptor];
-			descriptor[fileDescriptor] = null;
-			file.close();
-			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
-					+ " closed, starting cleanup");
-			String fileName = file.getName();
-
-			if (files.get(fileName) > 1)
-				files.put(fileName, files.get(fileName) - 1);
-			else 
-			{
-				files.remove(fileName);
-				if (deleted.contains(fileName)) 
-				{
-					Lib.debug(dbgProcess, "calling deleted list.clear()");
-					deleted.remove(fileName);
-					UserKernel.fileSystem.remove(fileName);
-				}
-			}
-			
-			
-			return 0;
-		}
-
-		public OpenFile get(int fileDescriptor) {
-			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
-				return null;
-			return descriptor[fileDescriptor];
-		}
-	}
-
 	/** The program being run by this process. */
 	protected Coff coff;
 
@@ -918,4 +843,80 @@ public class UserProcess {
 
 	protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
 	protected static Hashtable<Integer, UserProcess> diedProcesses = new Hashtable<Integer, UserProcess>();
+	
+	/**/
+	public class DescriptorManager {
+		public OpenFile descriptor[] = new OpenFile[maxFileDescriptorNum];
+	
+		public int add(int index, OpenFile file) {
+			if (index < 0 || index >= maxFileDescriptorNum)
+				return -1;
+	
+			if (descriptor[index] == null) {
+				descriptor[index] = file;
+				if (files.get(file.getName()) != null) {
+					files.put(file.getName(), files.get(file.getName()) + 1);
+				}
+				else {
+					files.put(file.getName(), 1);
+				}
+				Lib.debug(dbgProcess, "fileName: " + descriptor[index].getName()
+						+ " added with iterator:"+index);
+				return index;
+			}
+	
+			return -1;
+		}
+	
+		public int add(OpenFile file) {
+			for (int i = 0; i < maxFileDescriptorNum; i++)
+				if (descriptor[i] == null)
+					return add(i, file);
+	
+			return -1;
+		}
+	
+		public int close(int fileDescriptor) {
+			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
+			{
+				Lib.debug(dbgProcess, "file descriptor out of bounds");
+				return -1;
+			}
+			
+			if (descriptor[fileDescriptor] == null) {
+				Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
+						+ " doesn't exist");
+				return -1;
+			}
+	
+			OpenFile file = descriptor[fileDescriptor];
+			descriptor[fileDescriptor] = null;
+			file.close();
+			Lib.debug(dbgProcess, "file descriptor " + fileDescriptor
+					+ " closed, starting cleanup");
+			String fileName = file.getName();
+	
+			if (files.get(fileName) > 1)
+				files.put(fileName, files.get(fileName) - 1);
+			else 
+			{
+				files.remove(fileName);
+				if (deleted.contains(fileName)) 
+				{
+					Lib.debug(dbgProcess, "calling deleted list.clear()");
+					deleted.remove(fileName);
+					UserKernel.fileSystem.remove(fileName);
+				}
+			}
+			
+			
+			return 0;
+		}
+	
+		public OpenFile get(int fileDescriptor) {
+			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
+				return null;
+			return descriptor[fileDescriptor];
+		}
+	}
 }
