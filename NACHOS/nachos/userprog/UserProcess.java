@@ -23,13 +23,18 @@ public class UserProcess {
 	/**
 	 * Allocate a new process.
 	 */
-	public UserProcess() {
+	public UserProcess() 
+	{	
+		//Andrew
+		//Landon
 		PID = processNumber++;
-		status = -1;
+		status = -1;				
 		allProcesses.put(PID, this);
 		childProcesses = new HashSet<Integer>();
 		finished = new Semaphore(0);
-		descriptorManager = new DescriptorManager();
+		
+		//Every Process can open 16 (besides i/o) OpenFiles
+		descriptorManager = new FileDescriptor();
 		descriptorManager.add(0, UserKernel.console.openForReading());
 		descriptorManager.add(1, UserKernel.console.openForWriting());
 	}
@@ -69,6 +74,8 @@ public class UserProcess {
 	 * Called by <tt>UThread.saveState()</tt>.
 	 */
 	public void saveState() {
+		//UThread calls "process.saveState();" and then saves the registers
+		//and also "super.saveState();
 	}
 
 	/**
@@ -142,6 +149,8 @@ public class UserProcess {
 	 * @return the number of bytes successfully transferred.
 	 */
 	public int readVirtualMemory(int vaddr, byte[] data, int offset, int length) {
+		/*Andrew*/
+		/*Lenny*/
 		Lib.assertTrue(offset >= 0 && length >= 0
 				&& offset + length <= data.length);
 
@@ -208,6 +217,8 @@ public class UserProcess {
 	 * @return the number of bytes successfully transferred.
 	 */
 	public int writeVirtualMemory(int vaddr, byte[] data, int offset, int length) {
+		/*Andrew*/
+		/*Lenny*/
 		Lib.assertTrue(offset >= 0 && length >= 0
 				&& offset + length <= data.length);
 
@@ -356,6 +367,9 @@ public class UserProcess {
 	 * @return <tt>true</tt> if the sections were successfully loaded.
 	 */
 	protected boolean loadSections() {
+		/*Andrew*/
+		/*Lenny*/
+		
 		// physical page numbers allocated
 		int[] ppns = UserKernel.allocatePages(numPages);
 
@@ -397,6 +411,8 @@ public class UserProcess {
 	 * Release any resources allocated by <tt>loadSections()</tt>.
 	 */
 	protected void unloadSections() {
+		/*Andrew*/
+		/*Lenny*/
 		coff.close();
 		
 		for (int i = 0; i < numPages; i++)
@@ -425,6 +441,259 @@ public class UserProcess {
 		// initialize the first two argument registers to argc and argv
 		processor.writeRegister(Processor.regA0, argc);
 		processor.writeRegister(Processor.regA1, argv);
+	}
+
+	/**
+	 * Handle the halt() system call.
+	 */
+	protected int handleHalt() 
+	{
+		//Landon
+		//Andrew
+		if (this != UserKernel.rootProcess)
+			return 0;
+	
+		Kernel.kernel.terminate();
+	
+		Lib.assertNotReached("Machine.halt() did not halt machine!");
+		return 0;
+	}
+
+	protected int handleCreat(int name) 
+	{
+		/*Landon*/
+		String fileName = readVirtualMemoryString(name, maxFileNameLength);
+	
+		if (fileName == null) {
+			Lib.debug(dbgProcess, "Invalid file name pointer");
+			return -1;
+		}
+	
+		if (deletedFilesSet.contains(fileName)) {
+			Lib.debug(dbgProcess, "File is being deleted");
+			return -1;
+		}
+	
+		OpenFile file = UserKernel.fileSystem.open(fileName, true);
+	
+		if (file == null) {
+			Lib.debug(dbgProcess, "Create file failed");
+			return -1;
+		}
+	
+		Lib.debug(dbgProcess, "Create file:" + name+ " success");
+		return descriptorManager.add(file);
+	}
+
+	protected int handleOpen(int name) 
+	{
+		/*Landon*/
+		String fileName = readVirtualMemoryString(name, maxFileNameLength);
+	
+		if (fileName == null) {
+			Lib.debug(dbgProcess, "Invalid file name pointer");
+			return -1;
+		}
+	
+		OpenFile file = UserKernel.fileSystem.open(fileName, false);
+		Lib.debug(dbgProcess, "File has been opened");
+		
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file name");
+			return -1;
+		}
+	
+		if (deletedFilesSet.contains(fileName)) {
+			Lib.debug(dbgProcess, "File is being deleted");
+			return -1;
+		}
+	
+		
+		return descriptorManager.add(file);
+	}
+
+	protected int handleRead(int fileDescriptor, int buffer, int count) 
+	{
+		/*Landon*/
+		OpenFile file = descriptorManager.get(fileDescriptor);
+	
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file descriptor");
+			return -1;
+		}
+	
+		if (!(buffer >= 0 && count >= 0)) {
+			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
+			return -1;
+		}
+	
+		byte buf[] = new byte[count];
+	
+		int length = file.read(buf, 0, count);
+	
+		if (length == -1) {
+			Lib.debug(dbgProcess, "Fail to read from file");
+			return -1;
+		}
+	
+		length = writeVirtualMemory(buffer, buf, 0, length);
+		Lib.debug(dbgProcess, "read from file okay:");
+		return length;
+	}
+
+	protected int handleWrite(int fileDescriptor, int buffer, int count) 
+	{
+		/*Landon*/
+		OpenFile file = descriptorManager.get(fileDescriptor);
+	
+		if (file == null) {
+			Lib.debug(dbgProcess, "Invalid file descriptor");
+			return -1;
+		}
+	
+		if (!(buffer >= 0 && count >= 0)) {
+			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
+			return -1;
+		}
+	
+		byte buf[] = new byte[count];
+	
+		int length = readVirtualMemory(buffer, buf, 0, count);
+	
+		length = file.write(buf, 0, length);
+		Lib.debug(dbgProcess, "wrote to file okay:" + (char) buffer);
+		return length;
+	}
+
+	protected int handleClose(int fileDescriptor) 
+	{
+		return descriptorManager.close(fileDescriptor);
+	}
+
+	protected int handleUnlink(int name) 
+	{
+		/*Landon*/
+		String fileName = readVirtualMemoryString(name, maxFileNameLength);
+	
+		if (fileName == null) {
+			Lib.debug(dbgProcess, "Invalid file name pointer");
+			return -1;
+		}
+		
+	
+		if (files.containsKey(fileName)) 
+		{
+			Lib.debug(dbgProcess, "File added to delete list");
+			deletedFilesSet.add(fileName);
+		}
+		else 
+		{
+			if (!UserKernel.fileSystem.remove(fileName))
+			{
+				Lib.debug(dbgProcess, "file not found in system");
+				return -1;
+			}
+		}
+		
+		//Lib.debug(dbgProcess, "File successfully unlinked");
+		return 0;
+	}
+
+	protected int handleExec(int file, int argc, int argv) {
+		/*Andrew*/
+		String fileName = readVirtualMemoryString(file, maxFileNameLength);
+		
+		if (fileName == null || !fileName.endsWith(".coff")) {
+			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
+			return -1;
+		}
+	
+		if (argc < 0) {
+			Lib.debug(dbgProcess, "argc < 0");
+			return -1;
+		}
+	
+		String[] args = new String[argc];
+		byte[] buffer = new byte[4];
+	
+		for (int i = 0; i < argc; i++) {
+			if (readVirtualMemory(argv + i * 4, buffer) != 4)
+				return -1;
+			args[i] = readVirtualMemoryString(Lib.bytesToInt(buffer, 0),
+					maxFileNameLength);
+			if (args[i] == null)
+				return -1;
+		}
+	
+		UserProcess child = newUserProcess();
+		childProcesses.add(child.PID);
+	
+		saveState();
+	
+		if (!child.execute(fileName, args)) {
+			Lib.debug(dbgProcess, "fail to execute child process");
+			return -1;
+		}
+	
+		Lib.debug(dbgProcess, "returning child processID");
+		return child.PID;
+	}
+
+	protected int handleJoin(int processID, int status) {
+		/*Andrew*/
+		if (!childProcesses.contains(processID)) {
+			Lib
+					.debug(dbgProcess,
+							"processID does not refer to a child process of current process");
+			return -1;
+		}
+	
+		childProcesses.remove(processID);
+	
+		UserProcess child = allProcesses.get(processID);
+	
+		if (child == null) {
+			Lib.debug(dbgProcess, "join a exited process");
+			child = diedProcesses.get(processID);
+			if (child == null) {
+				Lib.debug(dbgProcess, "error in join");
+				return -1;
+			}
+		}
+	
+		child.finished.P();
+	
+		writeVirtualMemory(status, Lib.bytesFromInt(child.status));
+	
+		if (child.exitNormally)
+		{
+			Lib.debug(dbgProcess, "in handleJoin:child exited normally");
+			return 1;
+		}
+		else
+			return 0;
+	}
+
+	protected int handleExit(int status){ 		
+		/*Andrew*/
+		this.status = status;
+		
+		for (int i = 2; i < maxOpenFiles; i++)
+			descriptorManager.close(i);
+	
+		unloadSections();
+	
+		allProcesses.remove(PID);
+		diedProcesses.put(PID, this);
+	
+		finished.V();
+	
+		if (allProcesses.isEmpty())
+			Kernel.kernel.terminate();
+	
+		UThread.finish();
+	
+		return 0;
 	}
 
 	protected static final int syscallHalt = 0, syscallExit = 1,
@@ -509,7 +778,7 @@ public class UserProcess {
 		case syscallJoin:
 			return handleJoin(a0, a1);
 		case syscallCreate:
-			return handleCreate(a0);
+			return handleCreat(a0);
 		case syscallOpen:
 			return handleOpen(a0);
 		case syscallRead:
@@ -525,247 +794,8 @@ public class UserProcess {
 			Lib.debug(dbgProcess, "Unknown syscall " + syscall);
 			exitNormally = false;
 			handleExit(-1);
-			return -1; // XXX
-//			Lib.assertNotReached("Unknown system call!");
-		}
-//		return 0;
-	}
-
-	protected int handleUnlink(int name) {
-		String fileName = readVirtualMemoryString(name, maxFileNameLength);
-
-		if (fileName == null) {
-			Lib.debug(dbgProcess, "Invalid file name pointer");
 			return -1;
 		}
-		
-
-		if (files.containsKey(fileName)) 
-		{
-			Lib.debug(dbgProcess, "File added to delete list");
-			deleted.add(fileName);
-		}
-		else 
-		{
-			if (!UserKernel.fileSystem.remove(fileName))
-			{
-				Lib.debug(dbgProcess, "file not found in system");
-				return -1;
-			}
-		}
-		
-		//Lib.debug(dbgProcess, "File successfully unlinked");
-		return 0;
-	}
-
-	protected int handleClose(int fileDescriptor) {
-		return descriptorManager.close(fileDescriptor);
-	}
-
-	protected int handleWrite(int fileDescriptor, int buffer, int count) {
-		OpenFile file = descriptorManager.get(fileDescriptor);
-
-		if (file == null) {
-			Lib.debug(dbgProcess, "Invalid file descriptor");
-			return -1;
-		}
-
-		if (!(buffer >= 0 && count >= 0)) {
-			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
-			return -1;
-		}
-
-		byte buf[] = new byte[count];
-
-		int length = readVirtualMemory(buffer, buf, 0, count);
-
-		length = file.write(buf, 0, length);
-		Lib.debug(dbgProcess, "wrote to file okay:" + (char) buffer);
-		return length;
-	}
-
-	protected int handleRead(int fileDescriptor, int buffer, int count) {
-		OpenFile file = descriptorManager.get(fileDescriptor);
-
-		if (file == null) {
-			Lib.debug(dbgProcess, "Invalid file descriptor");
-			return -1;
-		}
-
-		if (!(buffer >= 0 && count >= 0)) {
-			Lib.debug(dbgProcess, "buffer and count should bigger then zero");
-			return -1;
-		}
-
-		byte buf[] = new byte[count];
-
-		int length = file.read(buf, 0, count);
-
-		if (length == -1) {
-			Lib.debug(dbgProcess, "Fail to read from file");
-			return -1;
-		}
-
-		length = writeVirtualMemory(buffer, buf, 0, length);
-		Lib.debug(dbgProcess, "read from file okay:");
-		return length;
-	}
-
-	protected int handleOpen(int name) {
-		String fileName = readVirtualMemoryString(name, maxFileNameLength);
-
-		if (fileName == null) {
-			Lib.debug(dbgProcess, "Invalid file name pointer");
-			return -1;
-		}
-
-		OpenFile file = UserKernel.fileSystem.open(fileName, false);
-		Lib.debug(dbgProcess, "File has been opened");
-		
-		if (file == null) {
-			Lib.debug(dbgProcess, "Invalid file name");
-			return -1;
-		}
-
-		if (deleted.contains(fileName)) {
-			Lib.debug(dbgProcess, "File is being deleted");
-			return -1;
-		}
-
-		
-		return descriptorManager.add(file);
-	}
-
-	protected int handleCreate(int name) {
-		String fileName = readVirtualMemoryString(name, maxFileNameLength);
-
-		if (fileName == null) {
-			Lib.debug(dbgProcess, "Invalid file name pointer");
-			return -1;
-		}
-
-		if (deleted.contains(fileName)) {
-			Lib.debug(dbgProcess, "File is being deleted");
-			return -1;
-		}
-
-		OpenFile file = UserKernel.fileSystem.open(fileName, true);
-
-		if (file == null) {
-			Lib.debug(dbgProcess, "Create file failed");
-			return -1;
-		}
-
-		Lib.debug(dbgProcess, "Create file:" + name+ " success");
-		return descriptorManager.add(file);
-	}
-
-	protected int handleJoin(int processID, int status) {
-		if (!childProcesses.contains(processID)) {
-			Lib
-					.debug(dbgProcess,
-							"processID does not refer to a child process of current process");
-			return -1;
-		}
-
-		childProcesses.remove(processID);
-
-		UserProcess child = allProcesses.get(processID);
-
-		if (child == null) {
-			Lib.debug(dbgProcess, "join a exited process");
-			child = diedProcesses.get(processID);
-			if (child == null) {
-				Lib.debug(dbgProcess, "error in join");
-				return -1;
-			}
-		}
-
-		child.finished.P();
-
-		writeVirtualMemory(status, Lib.bytesFromInt(child.status));
-
-		if (child.exitNormally)
-		{
-			Lib.debug(dbgProcess, "in handleJoin:child exited normally");
-			return 1;
-		}
-		else
-			return 0;
-	}
-
-	protected int handleExec(int file, int argc, int argv) {
-		String fileName = readVirtualMemoryString(file, maxFileNameLength);
-		
-		if (fileName == null || !fileName.endsWith(".coff")) {
-			Lib.debug(dbgProcess, "Invalid file name in handleExec()");
-			return -1;
-		}
-
-		if (argc < 0) {
-			Lib.debug(dbgProcess, "argc < 0");
-			return -1;
-		}
-
-		String[] args = new String[argc];
-		byte[] buffer = new byte[4];
-
-		for (int i = 0; i < argc; i++) {
-			if (readVirtualMemory(argv + i * 4, buffer) != 4)
-				return -1;
-			args[i] = readVirtualMemoryString(Lib.bytesToInt(buffer, 0),
-					maxFileNameLength);
-			if (args[i] == null)
-				return -1;
-		}
-
-		UserProcess child = newUserProcess();
-		childProcesses.add(child.PID);
-
-		saveState();
-
-		if (!child.execute(fileName, args)) {
-			Lib.debug(dbgProcess, "fail to execute child process");
-			return -1;
-		}
-
-		Lib.debug(dbgProcess, "returning child processID");
-		return child.PID;
-	}
-
-	protected int handleExit(int status) 
-	{
-		this.status = status;
-		
-		for (int i = 2; i < maxFileDescriptorNum; i++)
-			descriptorManager.close(i);
-
-		unloadSections();
-
-		allProcesses.remove(PID);
-		diedProcesses.put(PID, this);
-
-		finished.V();
-
-		if (allProcesses.isEmpty())
-			Kernel.kernel.terminate();
-
-		UThread.finish();
-
-		return 0;
-	}
-
-	/**
-	 * Handle the halt() system call.
-	 */
-	protected int handleHalt() {
-		if (this != UserKernel.rootProcess)
-			return 0;
-
-		Kernel.kernel.terminate();
-
-		Lib.assertNotReached("Machine.halt() did not halt machine!");
-		return 0;
 	}
 
 	/**
@@ -795,8 +825,7 @@ public class UserProcess {
 					+ Processor.exceptionNames[cause]);
 			exitNormally = false;
 			handleExit(-1);
-			return; // XXX
-//			Lib.assertNotReached("Unexpected exception");
+			return;
 		}
 	}
 
@@ -823,17 +852,17 @@ public class UserProcess {
 
 	protected HashSet<Integer> childProcesses;
 
-	protected DescriptorManager descriptorManager;
+	protected FileDescriptor descriptorManager;
 	
 	protected boolean exitNormally = true;
 
-	protected static final int maxFileDescriptorNum = 16;
+	protected static final int maxOpenFiles = 16;
 
 	/** All of the opening files and how many processes refer to them */
 	protected static Hashtable<String, Integer> files = new Hashtable<String, Integer>();
 
 	/** The files are going to be deleted */
-	protected static HashSet<String> deleted = new HashSet<String>();
+	protected static HashSet<String> deletedFilesSet = new HashSet<String>();
 
 	protected static final int pageSize = Processor.pageSize;
 	protected static final char dbgProcess = 'a';
@@ -844,15 +873,14 @@ public class UserProcess {
 	protected static Hashtable<Integer, UserProcess> allProcesses = new Hashtable<Integer, UserProcess>();
 	protected static Hashtable<Integer, UserProcess> diedProcesses = new Hashtable<Integer, UserProcess>();
 	
-	/**/
-	public class DescriptorManager {
-		public OpenFile descriptor[] = new OpenFile[maxFileDescriptorNum];
-	
+	public class FileDescriptor
+	{
 		public int add(int index, OpenFile file) {
-			if (index < 0 || index >= maxFileDescriptorNum)
+			if (index < 0 || index >= maxOpenFiles)
 				return -1;
 	
-			if (descriptor[index] == null) {
+			if (descriptor[index] == null) 
+			{
 				descriptor[index] = file;
 				if (files.get(file.getName()) != null) {
 					files.put(file.getName(), files.get(file.getName()) + 1);
@@ -868,16 +896,18 @@ public class UserProcess {
 			return -1;
 		}
 	
-		public int add(OpenFile file) {
-			for (int i = 0; i < maxFileDescriptorNum; i++)
+		public int add(OpenFile file) 
+		{
+			for (int i = 0; i < maxOpenFiles; i++)
 				if (descriptor[i] == null)
 					return add(i, file);
 	
 			return -1;
 		}
 	
-		public int close(int fileDescriptor) {
-			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
+		public int close(int fileDescriptor) 
+		{
+			if (fileDescriptor < 0 || fileDescriptor >= maxOpenFiles)
 			{
 				Lib.debug(dbgProcess, "file descriptor out of bounds");
 				return -1;
@@ -888,7 +918,6 @@ public class UserProcess {
 						+ " doesn't exist");
 				return -1;
 			}
-	
 			OpenFile file = descriptor[fileDescriptor];
 			descriptor[fileDescriptor] = null;
 			file.close();
@@ -901,22 +930,22 @@ public class UserProcess {
 			else 
 			{
 				files.remove(fileName);
-				if (deleted.contains(fileName)) 
+				if (deletedFilesSet.contains(fileName)) 
 				{
-					Lib.debug(dbgProcess, "calling deleted list.clear()");
-					deleted.remove(fileName);
+					Lib.debug(dbgProcess, "calling deleted list.remove()");
+					deletedFilesSet.remove(fileName);
 					UserKernel.fileSystem.remove(fileName);
 				}
-			}
-			
-			
+			}	
 			return 0;
 		}
-	
-		public OpenFile get(int fileDescriptor) {
-			if (fileDescriptor < 0 || fileDescriptor >= maxFileDescriptorNum)
+		public OpenFile get(int fileDescriptor) 
+		{
+			if (fileDescriptor < 0 || fileDescriptor >= maxOpenFiles)
 				return null;
 			return descriptor[fileDescriptor];
 		}
+		//variable : array of OpenFiles, up to 16.
+		public OpenFile descriptor[] = new OpenFile[maxOpenFiles];
 	}
 }

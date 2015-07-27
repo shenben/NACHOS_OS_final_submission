@@ -20,13 +20,18 @@ public class UserKernel extends ThreadedKernel {
 	 * processor's exception handler.
 	 */
 	public void initialize(String[] args) {
+		/*
+		 Landon
+		 Andrew
+		 Lenny
+		 Isaac
+		 */		
+		
 		super.initialize(args);
 
 		console = new SynchConsole(Machine.console());
 
 		listLock = new Lock();
-		
-		//freePages = new LinkedList<Integer>();
 		
 		freePages = new ArrayList<Integer>();
 		
@@ -154,12 +159,10 @@ public class UserKernel extends ThreadedKernel {
 	public static UserProcess rootProcess = null;
 
 	/** A global linked list of free physical pages. */
-	//public static LinkedList<Integer> freePages;
-	
+	public static ArrayList<Integer> freePages;
 	
 	public static Lock listLock;
 	
-	public static ArrayList<Integer> freePages;
 	
 	
 	

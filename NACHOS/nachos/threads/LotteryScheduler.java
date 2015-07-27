@@ -25,6 +25,7 @@ import nachos.machine.Lib;
  * Unlike a priority scheduler, these tickets add (as opposed to just taking the
  * maximum).
  */
+/*-------------Isaac Flores------------------*/
 public class LotteryScheduler extends PriorityScheduler {
 	/**
 	 * Allocate a new lottery scheduler.
@@ -32,22 +33,6 @@ public class LotteryScheduler extends PriorityScheduler {
 	public LotteryScheduler() {
 	}
 
-
-	public static final int priorityDefault = 1;
-
-	public static final int priorityMinimum = 1;
-
-	public static final int priorityMaximum = Integer.MAX_VALUE;
-
-	protected static int totalTickets;
-	
-	@Override
-	protected LotteryThreadState getThreadState(KThread thread) {
-		if (thread.schedulingState == null)
-			thread.schedulingState = new LotteryThreadState(thread);
-
-		return (LotteryThreadState) thread.schedulingState;
-	}
 
 	/**
 	 * Allocate a new lottery thread queue.
@@ -57,8 +42,32 @@ public class LotteryScheduler extends PriorityScheduler {
 	 *            waiting threads to the owning thread.
 	 * @return a new lottery thread queue.
 	 */
-	public ThreadQueue newThreadQueue(boolean transferPriority) {
+	
+	/*public ThreadQueue newThreadQueue(boolean transferPriority) {
 		return new LotteryQueue(transferPriority);
+	}*/
+
+	 /**
+     * The default priority for a new thread. Do not change this value.
+     */
+    public static final int priorityDefault = 1;
+    /**
+     * The minimum priority that a thread can have. Do not change this value.
+     */
+    public static final int priorityMinimum = 1;
+    /**
+     * The maximum priority that a thread can have. Do not change this value.
+     */
+    public static final int priorityMaximum = Integer.MAX_VALUE;
+    
+    protected static int totalTickets;
+	
+	@Override
+	protected LotteryThreadState getThreadState(KThread thread) {
+		if (thread.schedulingState == null)
+			thread.schedulingState = new LotteryThreadState(thread);
+
+		return (LotteryThreadState) thread.schedulingState;
 	}
 
 	protected class LotteryQueue extends PriorityScheduler.PriorityQueue {
@@ -68,6 +77,7 @@ public class LotteryScheduler extends PriorityScheduler {
 
 		@Override
 		protected LotteryThreadState pickNextThread() {
+			/*
 			if (waitQueue.isEmpty())
 				return null;
 
@@ -88,6 +98,38 @@ public class LotteryScheduler extends PriorityScheduler {
 
 			Lib.assertNotReached();
 			return null;
+			*/
+			
+			totalTickets = 0;
+	    	for(KThread current : waitQueue){
+	    		totalTickets += getEffectivePriority(current);//this is really inefficient
+	    	}
+		    // implement me
+			/*-------------Andrew-------------*/
+		    /*-------------Isaac--------------*/
+				KThread nextThread;
+				//int winner = Machine.timer.getTime()%totalTickets;
+				int winner = random.nextInt();
+				//winning "ticket" must be less than the total tickets in the system
+				nextThread = null;
+				
+					for (KThread thread : waitQueue){//increment by each thread through waitQueue
+						if (nextThread == null|| getEffectivePriority(thread) < winner) {
+							//Finding the thread with the highest priority to set to nextThread
+								nextThread = thread;
+							//subtract this thread's tickets from winner. this guarantees a winner
+								winner -= getEffectivePriority(thread);
+						}
+					
+						else{
+							totalTickets -= getEffectivePriority(thread);
+							return getThreadState(thread);
+						}
+				//return null was taken out, we need to return the next thread we picked
+			/*-------------Andrew-------------*/
+		    /*-------------Isaac--------------*/
+					}
+					return null;//we should get here iff waitQueue is empty
 		}
 	}
 
@@ -102,11 +144,10 @@ public class LotteryScheduler extends PriorityScheduler {
 		}
 		
 		private int getEffectivePriority(HashSet<LotteryThreadState> set) {
-//			if (effectivePriority != expiredEffectivePriority)
-//				return effectivePriority;
-			
+			/*-------------Andrew-------------*/
+			/*-------------Landon-------------*/
 			if (set.contains(this)) {
-//				System.err.println("Deadlock");
+
 				return priority;
 			}
 
