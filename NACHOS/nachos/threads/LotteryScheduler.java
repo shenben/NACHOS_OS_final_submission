@@ -77,29 +77,6 @@ public class LotteryScheduler extends PriorityScheduler {
 
 		@Override
 		protected LotteryThreadState pickNextThread() {
-			/*
-			if (waitQueue.isEmpty())
-				return null;
-
-			int totalLottery = 0;
-			
-			int[] sum = new int[waitQueue.size()];
-			
-			int i = 0;
-			for (KThread thread : waitQueue)
-				sum[i++] = totalLottery += getThreadState(thread).getEffectivePriority();
-			
-			int lottery = random.nextInt(totalLottery);
-
-			i = 0;
-			for (KThread thread : waitQueue)
-				if (lottery < sum[i++])
-					return getThreadState(thread);
-
-			Lib.assertNotReached();
-			return null;
-			*/
-			
 			totalTickets = 0;
 	    	for(KThread current : waitQueue){
 	    		totalTickets += getEffectivePriority(current);//this is really inefficient
