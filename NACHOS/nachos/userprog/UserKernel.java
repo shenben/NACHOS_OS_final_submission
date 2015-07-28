@@ -31,7 +31,7 @@ public class UserKernel extends ThreadedKernel {
 
 		console = new SynchConsole(Machine.console());
 
-		listLock = new Lock();
+		freePageLock = new Lock();
 		
 		freePages = new ArrayList<Integer>();
 		
@@ -49,7 +49,8 @@ public class UserKernel extends ThreadedKernel {
 	 * Test the console device.
 	 */
 	public void selfTest() {
-		// super.selfTest();
+		
+		super.selfTest();
 		//
 		// System.out.println("Testing the console device. Typed characters");
 		// System.out.println("will be echoed until q is typed.");
@@ -124,11 +125,11 @@ public class UserKernel extends ThreadedKernel {
 	}
 
 	public static int[] allocatePages(int num) {
-		listLock.acquire();
+		freePageLock.acquire();
 
-		if (freePages.size() < num) 	//if we don't have enough to allocate
+		if (freePages.size() < num) 	//if we don't have enough to allocate for user request
 		{
-			listLock.release();
+			freePageLock.release();
 			return null;
 		}
 
@@ -136,20 +137,17 @@ public class UserKernel extends ThreadedKernel {
 
 		for (int i = 0; i < num; i++)
 		{
-			//freePages.
-			
-			//result[i] = freePages.remove(0);
 			result[i] = freePages.remove(freePages.size()-1);
 		}
-		listLock.release();
+		freePageLock.release();
 
 		return result;
 	}
 
 	public static void releasePage(int ppn) {
-		listLock.acquire();
+		freePageLock.acquire();
 		freePages.add(ppn);
-		listLock.release();
+		freePageLock.release();
 	}
 
 	/** Globally accessible reference to the synchronized console. */
@@ -161,9 +159,5 @@ public class UserKernel extends ThreadedKernel {
 	/** A global linked list of free physical pages. */
 	public static ArrayList<Integer> freePages;
 	
-	public static Lock listLock;
-	
-	
-	
-	
+	public static Lock freePageLock;
 }

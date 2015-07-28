@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 import nachos.machine.Lib;
+import nachos.machine.Machine;
 
 /**
  * A scheduler that chooses threads using a lottery.
@@ -61,13 +62,48 @@ public class LotteryScheduler extends PriorityScheduler {
     public static final int priorityMaximum = Integer.MAX_VALUE;
     
     protected static int totalTickets;
-	
+
+    
 	@Override
 	protected LotteryThreadState getThreadState(KThread thread) {
 		if (thread.schedulingState == null)
 			thread.schedulingState = new LotteryThreadState(thread);
 
 		return (LotteryThreadState) thread.schedulingState;
+	}
+	
+	protected static final char dbgProcess = 'a';
+	
+	
+	public static void selfTest() 
+	{
+		Lib.debug(dbgProcess, "Enter LotteryScheduler.selfTest, this prints random things");
+        KThread[] threads = new KThread[20]; 
+        for (int i = 1; i < 11; i++)
+        {
+                threads[i-1] = new KThread(new Runnable() {
+                           public void run() {
+                                   int j = 0;
+                                   while (j < 20)
+                                   {
+                                           long currentTime = Machine.timer().getTime();
+                                           while (Machine.timer().getTime() < currentTime + 500)
+                                           {
+                                                   KThread.yield();
+                                           }
+                                           //System.out.println(KThread.currentThread().getName() + " loop # " + j);
+                                         Lib.debug(dbgProcess, KThread.currentThread().getName() + " loop # " + j);
+                                           j++;
+                                   }
+                                   }
+                           }).setName("Thread #" + i);
+        }
+        for (int i = 0; i < 10; i++)
+        {
+                threads[i].fork();
+                ((LotteryScheduler.ThreadState)threads[i].schedulingState).setPriority(50*i);
+        }
+        KThread.yield();
 	}
 
 	protected class LotteryQueue extends PriorityScheduler.PriorityQueue {
@@ -147,7 +183,8 @@ public class LotteryScheduler extends PriorityScheduler {
 							.getEffectivePriority(set);
 					set.remove(this);
 				}
-
+			//Lib.debug(dbgProcess, KThread.currentThread().getName());
+			//Lib.debug(dbgProcess,  "current thread has priority of:" + effectivePriority);
 			return effectivePriority;
 		}
 	}
