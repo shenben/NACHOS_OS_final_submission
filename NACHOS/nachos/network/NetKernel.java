@@ -22,7 +22,7 @@ public class NetKernel extends UserKernel {
 		super();
 	}
 
-	@Override
+//	@Override
 	protected OpenFile openSwapFile() {
 		return fileSystem.open("swapfile" + Machine.networkLink().getLinkAddress(), true);
 	}
@@ -52,6 +52,8 @@ public class NetKernel extends UserKernel {
 
 	SocketPostOffice postOffice;
 
+	
+	
 	/**
 	 * A class to encapsulate the management of the NachOS Transport Protocol with threads to do delivery and such.
 	 */
@@ -98,8 +100,8 @@ public class NetKernel extends UserKernel {
 			timerInterruptThread.fork();
 		}
 
-		Connection accept(int port) {
-			Connection c = awaitingConnectionMap.retrieve(port);
+		Socket accept(int port) {
+			Socket c = awaitingSocketMap.retrieve(port);
 
 			if (c != null)
 				c.accept();
@@ -107,56 +109,56 @@ public class NetKernel extends UserKernel {
 			return c;
 		}
 
-		Connection connect(int host, int port) {
-			Connection connection = null;
+		Socket connect(int host, int port) {
+			Socket Socket = null;
 			boolean found = false;
 			int srcPort, tries = 0;
-			while (connection == null) {
-				//Find a source port for the connection
+			while (Socket == null) {
+				//Find a source port for the Socket
 				srcPort = portGenerator.nextInt(MailMessage.portLimit);
 				tries = 0;
 				
-				while (!(found = (connectionMap.get(srcPort, host, port) == null)) && tries++ < MailMessage.portLimit)
+				while (!(found = (SocketMap.get(srcPort, host, port) == null)) && tries++ < MailMessage.portLimit)
 					srcPort = (srcPort+1) % MailMessage.portLimit;
 				
 				if (found) {
-					connection = new Connection(host, port, srcPort);
-					connectionMap.put(connection);
-					if (!connection.connect()) {
-						connectionMap.remove(connection);
-						connection = null;
+					Socket = new Socket(host, port, srcPort);
+					SocketMap.put(Socket);
+					if (!Socket.connect()) {
+						SocketMap.remove(Socket);
+						Socket = null;
 					}
 				}//else port saturation, so randomize and try again
 			}
 
-			return connection;
+			return Socket;
 		}
 
 		private Random portGenerator = new Random();
 
 		/**
-		 * Closes the connection remove it from the connectionMap, if it exists.
+		 * Closes the Socket remove it from the SocketMap, if it exists.
 		 * <p>
-		 * This should only be called from the kernel when closing a "live" connection 
+		 * This should only be called from the kernel when closing a "live" Socket 
 		 * (i.e. one that successfully returned from connect).
-		 * @param connection (not null)
+		 * @param Socket (not null)
 		 */
-		void close(Connection connection) {
-			if (connectionMap.remove(connection.srcPort, connection.destAddress, connection.destPort) != null)
-				connection.close();
+		void close(Socket Socket) {
+			if (SocketMap.remove(Socket.srcPort, Socket.destAddress, Socket.destPort) != null)
+				Socket.close();
 		}
 
 		/**
-		 * Closes all the <tt>Connection</tt> instances in both the <tt>connectionMap</tt> 
-		 * and <tt>awaitingConnectionMap</tt>, and remove the instances from the respective maps.
+		 * Closes all the <tt>Socket</tt> instances in both the <tt>SocketMap</tt> 
+		 * and <tt>awaitingSocketMap</tt>, and remove the instances from the respective maps.
 		 */
 		void shutdown() {
-			connectionMap.shutdown();
-			awaitingConnectionMap.shutdown();
+			SocketMap.shutdown();
+			awaitingSocketMap.shutdown();
 
 			terminationLock.acquire();
 
-			while (!connectionMap.isEmpty())
+			while (!SocketMap.isEmpty())
 				terminationCondition.sleep();
 
 			terminationLock.release();
@@ -167,12 +169,12 @@ public class NetKernel extends UserKernel {
 		private Condition terminationCondition;
 
 		/**
-		 * Called by a <tt>Connection</tt> instance when it is fully closed and 
-		 * exhausted. This causes NetKernel to remove it from its connection mappings.
-		 * @param connection
+		 * Called by a <tt>Socket</tt> instance when it is fully closed and 
+		 * exhausted. This causes NetKernel to remove it from its Socket mappings.
+		 * @param Socket
 		 */
-		void finished(Connection c) {
-			if (connectionMap.remove(c.srcPort, c.destAddress, c.destPort) != null) {
+		void finished(Socket c) {
+			if (SocketMap.remove(c.srcPort, c.destAddress, c.destPort) != null) {
 				terminationLock.acquire();
 				terminationCondition.wake();
 				terminationLock.release();
@@ -207,7 +209,7 @@ public class NetKernel extends UserKernel {
 		 */
 		private void postalDelivery() {
 			MailMessage pktMsg = null;
-			Connection connection = null;
+			Socket Socket = null;
 			while (true) {
 				messageReceived.P();
 
@@ -217,20 +219,20 @@ public class NetKernel extends UserKernel {
 					continue;//Just drop the packet
 				}
 
-				if ((connection = connectionMap.get(pktMsg.dstPort, pktMsg.packet.srcLink, pktMsg.srcPort)) != null)
-					connection.packet(pktMsg);
+				if ((Socket = SocketMap.get(pktMsg.dstPort, pktMsg.packet.srcLink, pktMsg.srcPort)) != null)
+					Socket.packet(pktMsg);
 				else if (pktMsg.flags == MailMessage.SYN) {
-					connection = new Connection(pktMsg.packet.srcLink, pktMsg.srcPort, pktMsg.dstPort);
-					connection.packet(pktMsg);
+					Socket = new Socket(pktMsg.packet.srcLink, pktMsg.srcPort, pktMsg.dstPort);
+					Socket.packet(pktMsg);
 
-					//Put it in the connectionMap
-					connectionMap.put(connection);
+					//Put it in the SocketMap
+					SocketMap.put(Socket);
 
-					//Put it in the awaiting connection map
-					awaitingConnectionMap.addWaiting(connection);
+					//Put it in the awaiting Socket map
+					awaitingSocketMap.addWaiting(Socket);
 				} else if (pktMsg.flags == MailMessage.FIN) {
 					try {
-						enqueue(new MailMessage(pktMsg.packet.srcLink, pktMsg.srcPort, pktMsg.packet.dstLink, pktMsg.dstPort, MailMessage.FIN | MailMessage.ACK, 0, MailMessage.EMPTY_CONTENT).packet);
+						enqueue(new MailMessage(pktMsg.packet.srcLink, pktMsg.srcPort, pktMsg.packet.dstLink, pktMsg.dstPort, MailMessage.EMPTY_CONTENT).packet);
 					} catch (MalformedPacketException e) {
 					}
 				}
@@ -286,14 +288,14 @@ public class NetKernel extends UserKernel {
 			while (true) {
 				alarm.waitUntil(20000);
 
-				//Call the retransmit method on all the Connections
-				connectionMap.retransmitAll();
-				awaitingConnectionMap.retransmitAll();//FIXME: This may not be necessary
+				//Call the retransmit method on all the Sockets
+				SocketMap.retransmitAll();
+				awaitingSocketMap.retransmitAll();//FIXME: This may not be necessary
 			}
 		}
 
-		private ConnectionMap connectionMap = new ConnectionMap();
-		private AwaitingConnectionMap awaitingConnectionMap = new AwaitingConnectionMap();
+		private SocketMap SocketMap = new SocketMap();
+		private AwaitingSocketMap awaitingSocketMap = new AwaitingSocketMap();
 
 		private Semaphore messageReceived = new Semaphore(0);
 		private Semaphore messageSent = new Semaphore(0);
@@ -308,15 +310,15 @@ public class NetKernel extends UserKernel {
 	/**
 	 * A multimap to handle hash collisions
 	 */
-	private static class ConnectionMap {
+	private static class SocketMap {
 		void retransmitAll() {
 			lock.acquire();
-			for (Connection c : map.values())
+			for (Socket c : map.values())
 				c.retransmit();
 			lock.release();
 		}
 
-		Connection remove(Connection conn) {
+		Socket remove(Socket conn) {
 			return remove(conn.srcPort, conn.destAddress, conn.destPort);
 		}
 
@@ -328,57 +330,57 @@ public class NetKernel extends UserKernel {
 		}
 
 		/**
-		 * Closes all connections and removes them from this map.
+		 * Closes all Sockets and removes them from this map.
 		 */
 		void shutdown() {
 			lock.acquire();
-			for (Connection c : map.values())
+			for (Socket c : map.values())
 				c.close();
 			lock.release();
 		}
 
-		Connection get(int sourcePort, int destinationAddress, int destinationPort) {
+		Socket get(int sourcePort, int destinationAddress, int destinationPort) {
 			lock.acquire();
-			Connection c = map.get(new SocketKey(sourcePort,destinationAddress,destinationPort));
+			Socket c = map.get(new SocketKey(sourcePort,destinationAddress,destinationPort));
 			lock.release();
 			return c;
 		}
 
-		void put(Connection c) {
+		void put(Socket c) {
 			lock.acquire();
 			map.put(new SocketKey(c.srcPort,c.destAddress,c.destPort),c);
 			lock.release();
 		}
 
-		Connection remove(int sourcePort, int destinationAddress, int destinationPort) {
+		Socket remove(int sourcePort, int destinationAddress, int destinationPort) {
 			lock.acquire();
-			Connection c = map.remove(new SocketKey(sourcePort,destinationAddress,destinationPort));
+			Socket c = map.remove(new SocketKey(sourcePort,destinationAddress,destinationPort));
 			lock.release();
 			return c;
 		}
 
-		private HashMap<SocketKey, Connection> map = new HashMap<SocketKey, Connection>();
+		private HashMap<SocketKey, Socket> map = new HashMap<SocketKey, Socket>();
 		
 		private Lock lock = new Lock();
 	}
 
 	/**
-	 * A class that holds <tt>Connection</tt>s waiting to be accepted. 
+	 * A class that holds <tt>Socket</tt>s waiting to be accepted. 
 	 */
-	private static class AwaitingConnectionMap {
+	private static class AwaitingSocketMap {
 		/**
-		 * Add the connection to the set of waiting connections
+		 * Add the Socket to the set of waiting Sockets
 		 * @param c
-		 * @return true if the connection didn't already exist
+		 * @return true if the Socket didn't already exist
 		 */
-		boolean addWaiting(Connection c) {
+		boolean addWaiting(Socket c) {
 			boolean returnBool = false;
 			lock.acquire();
 			if (!map.containsKey(c.srcPort))
-				map.put(c.srcPort, new HashMap<SocketKey,Connection>());
+				map.put(c.srcPort, new HashMap<SocketKey,Socket>());
 
 			if (map.get(c.srcPort).containsKey(null))
-				returnBool = false;//Connection already exists
+				returnBool = false;//Socket already exists
 			else {
 				map.get(c.srcPort).put(new SocketKey(c.srcPort,c.destAddress,c.destPort), c);
 				returnBool = true;
@@ -388,7 +390,7 @@ public class NetKernel extends UserKernel {
 		}
 
 		/**
-		 * Closes all connections and removes them from this map.
+		 * Closes all Sockets and removes them from this map.
 		 */
 		void shutdown() {
 			lock.acquire();
@@ -398,22 +400,22 @@ public class NetKernel extends UserKernel {
 
 		void retransmitAll() {
 			lock.acquire();
-			for (HashMap<SocketKey,Connection> hm : map.values())
-				for (Connection c : hm.values())
+			for (HashMap<SocketKey,Socket> hm : map.values())
+				for (Socket c : hm.values())
 					c.retransmit();
 			lock.release();
 		}
 
 		/**
-		 * Retrieve a <tt>Connection</tt> from the given port and remove it from <tt>this</tt>. Return null if one doesn't exist.
+		 * Retrieve a <tt>Socket</tt> from the given port and remove it from <tt>this</tt>. Return null if one doesn't exist.
 		 * @param port
-		 * @return a connection on the port if it exists.
+		 * @return a Socket on the port if it exists.
 		 */
-		Connection retrieve(int port) {
-			Connection c = null;
+		Socket retrieve(int port) {
+			Socket c = null;
 			lock.acquire();
 			if (map.containsKey(port)) {
-				HashMap<SocketKey,Connection> mp = map.get(port);
+				HashMap<SocketKey,Socket> mp = map.get(port);
 
 				c = mp.remove(mp.keySet().iterator().next());
 
@@ -426,7 +428,7 @@ public class NetKernel extends UserKernel {
 			return c;
 		}
 
-		private HashMap<Integer,HashMap<SocketKey,Connection>> map = new HashMap<Integer,HashMap<SocketKey,Connection>>();
+		private HashMap<Integer,HashMap<SocketKey,Socket>> map = new HashMap<Integer,HashMap<SocketKey,Socket>>();
 		
 		private Lock lock = new Lock();
 	}
@@ -459,6 +461,6 @@ public class NetKernel extends UserKernel {
 
 		private int sourcePort, destAddress, destPort, hashcode;
 	}
+	
+	
 }
-Status API Training Shop Blog About Help
-© 2015 GitHub, Inc. Terms Privacy Security Contact

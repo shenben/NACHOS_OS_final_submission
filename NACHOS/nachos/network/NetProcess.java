@@ -172,7 +172,7 @@ public class NetProcess extends UserProcess {
 				i=-1;
 		}
 		if (i!= -1) {
-			Connection c = null;
+			Socket c = null;
 			try {
 				// Try to get an entry in the file table
 	//			c = ((NetKernel) kernel).postOffice.accept(port);
@@ -195,7 +195,7 @@ public class NetProcess extends UserProcess {
 	 * reside in the process's page table.
 	 */
 	private static class OpenSocket extends OpenFile {
-		OpenSocket(Connection c) {
+		OpenSocket(Socket c) {
 			super(null, c.srcPort + "," + c.destAddress + "," + c.destPort);
 			connection = c;
 		}
@@ -234,7 +234,7 @@ public class NetProcess extends UserProcess {
 		}
 
 		/** The underlying connection for this socket. */
-		private Connection connection;
+		private Socket connection;
 	}
 	
 	

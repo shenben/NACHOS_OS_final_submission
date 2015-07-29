@@ -13,10 +13,11 @@ import nachos.machine.Packet;
 import nachos.threads.Condition;
 import nachos.threads.Lock;
 
-class Connection {
+class Socket {
 	
 	private Lock stateLock = new Lock();
 	private Condition connectionEstablished;
+	//network transaction processing system state
 	private NTPState currentState = NTPState.CLOSED;
 	private boolean calledClose = false;
 
@@ -27,7 +28,7 @@ class Connection {
 	
 	int destAddress, destPort, srcPort;
 	
-	Connection(int _destAddress, int _destPort, int _srcPort) {
+	Socket(int _destAddress, int _destPort, int _srcPort) {
 		destAddress = _destAddress;
 		destPort = _destPort;
 		srcPort = _srcPort;
@@ -232,7 +233,7 @@ class Connection {
 	private enum NTPState {		
 		CLOSED {
 			@Override
-			void connect(Connection c) {
+			void connect(Socket c) {
 				// Establish 
 				c.transmit(MailMessage.SYN);
 				// Immediately transition
@@ -243,7 +244,7 @@ class Connection {
 			}
 			
 			@Override
-			byte[] recv(Connection c, int maxBytes) {
+			byte[] recv(Socket c, int maxBytes) {
 				byte[] data = super.recv(c, maxBytes);
 				
 				// Exhausted?
@@ -254,19 +255,19 @@ class Connection {
 			}
 			
 			@Override
-			int send(Connection c, byte[] buffer) {
+			int send(Socket c, byte[] buffer) {
 				return -1;
 			}
 			
 			@Override
-			void syn(Connection c, MailMessage msg) {
+			void syn(Socket c, MailMessage msg) {
 				// Transition to SYN_RCVD
 				Lib.debug(networkDebugFlag,"Tranition to SYN_RCVD");
 				c.currentState = SYN_RCVD;
 			} 
 			
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				// Send FINACK
 				c.transmit(MailMessage.FIN | MailMessage.ACK);
 			}
@@ -275,13 +276,13 @@ class Connection {
 		
 		SYN_SENT {
 			@Override
-			void timer(Connection c) {
+			void timer(Socket c) {
 				// Send SYN
 				c.transmit(MailMessage.SYN);
 			}
 
 			@Override
-			void syn(Connection c, MailMessage msg) {
+			void syn(Socket c, MailMessage msg) {
 				// Protocol deadlock!
 				Lib.debug(networkDebugFlag,"Transition to DEADLOCK");
 				c.currentState = DEADLOCK;
@@ -289,7 +290,7 @@ class Connection {
 			} 
 			
 			@Override
-			void synack(Connection c, MailMessage msg) {
+			void synack(Socket c, MailMessage msg) {
 				// Goto ESTABLISHED, wake thread waiting in connect()
 				Lib.debug(networkDebugFlag,"Transition to ESTABLISHED");
 				c.currentState = ESTABLISHED;
@@ -297,17 +298,17 @@ class Connection {
 			}
 			
 			@Override
-			void data(Connection c, MailMessage msg) {
+			void data(Socket c, MailMessage msg) {
 				// Send SYN
 				c.transmit(MailMessage.SYN);
 			}
 			@Override
-			void stp(Connection c, MailMessage msg) {
+			void stp(Socket c, MailMessage msg) {
 				// Send SYN
 				c.transmit(MailMessage.SYN);
 			}
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				// Send SYN
 				c.transmit(MailMessage.SYN);
 			}
@@ -315,7 +316,7 @@ class Connection {
 		
 		SYN_RCVD {
 			@Override
-			void accept(Connection c) {
+			void accept(Socket c) {
 				// Send SYNACK, goto ESTABLISHED
 				c.transmit(MailMessage.SYN | MailMessage.ACK);
 				Lib.debug(networkDebugFlag,"Transition to ESTABLISHED");
@@ -325,7 +326,7 @@ class Connection {
 		
 		ESTABLISHED {			
 			@Override
-			void close(Connection c) {
+			void close(Socket c) {
 				if (c.sendWindow.empty() && c.sendBuffer.size() == 0) {//No more data to send, either in queue or window
 					c.transmit(MailMessage.FIN);
 					Lib.debug(networkDebugFlag,"Transition to CLOSING");
@@ -339,13 +340,13 @@ class Connection {
 			}
 			
 			@Override
-			void syn(Connection c, MailMessage msg) {
+			void syn(Socket c, MailMessage msg) {
 				// Send SYNACK
 				c.transmit(MailMessage.SYN | MailMessage.ACK);
 			}
 			
 			@Override
-			void data(Connection c, MailMessage msg) {
+			void data(Socket c, MailMessage msg) {
 				if (c.receiveWindow.add(msg))
 					c.transmitAck(msg.sequence);
 				else
@@ -353,20 +354,20 @@ class Connection {
 			}
 			
 			@Override
-			void ack(Connection c, MailMessage msg) {
+			void ack(Socket c, MailMessage msg) {
 				c.sendWindow.acked(msg.sequence);
 				c.transmitData();
 			}
 			
 			@Override
-			void stp(Connection c, MailMessage msg) {
+			void stp(Socket c, MailMessage msg) {
 				c.sendWindow.clear();
 				Lib.debug(networkDebugFlag,"Transition to STP_RCVD");
 				c.currentState = STP_RCVD;
 			}
 			
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				c.sendWindow.clear();
 				c.transmit(MailMessage.FIN | MailMessage.ACK);
 				Lib.debug(networkDebugFlag,"Transition to CLOSED");
@@ -376,13 +377,13 @@ class Connection {
 		},
 		
 		STP_SENT {
-			@Override int send(Connection c, byte[] buffer) {
+			@Override int send(Socket c, byte[] buffer) {
 				// Can't send more data on a closing connection
 				return -1;
 			}
 			
 			@Override
-			void timer(Connection c) {
+			void timer(Socket c) {
 				if (c.sendWindow.empty())
 					c.transmit(MailMessage.FIN);
 				else
@@ -393,7 +394,7 @@ class Connection {
 			}
 			
 			@Override
-			void ack(Connection c, MailMessage msg) {
+			void ack(Socket c, MailMessage msg) {
 				c.sendWindow.acked(msg.sequence);
 				c.transmitData();
 				
@@ -404,24 +405,24 @@ class Connection {
 			}
 			
 			@Override
-			void syn(Connection c, MailMessage msg) {
+			void syn(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.SYN | MailMessage.ACK);
 			}
 			
 			@Override
-			void data(Connection c, MailMessage msg) {
+			void data(Socket c, MailMessage msg) {
 				c.transmitStp();
 			}
 			
 			@Override
-			void stp(Connection c, MailMessage msg) {
+			void stp(Socket c, MailMessage msg) {
 				c.sendWindow.clear();
 				c.transmit(MailMessage.FIN);
 				c.currentState = CLOSING;
 			}
 			
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.FIN | MailMessage.ACK);
 				c.currentState = CLOSED;
 				c.finished();
@@ -431,20 +432,20 @@ class Connection {
 		
 		STP_RCVD {
 			@Override
-			int send(Connection c, byte[] buffer) {
+			int send(Socket c, byte[] buffer) {
 				// Can't send more data on a closing connection
 				return -1;
 			}
 			
 			@Override
-			void close(Connection c) {
+			void close(Socket c) {
 				c.transmit(MailMessage.FIN);
 				Lib.debug(networkDebugFlag,"Transition to CLOSING");
 				c.currentState = CLOSING;
 			}
 			
 			@Override
-			void data(Connection c, MailMessage msg) {
+			void data(Socket c, MailMessage msg) {
 				if (c.receiveWindow.add(msg))
 					c.transmitAck(msg.sequence);
 				else
@@ -452,7 +453,7 @@ class Connection {
 			}
 			
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.FIN | MailMessage.ACK);
 				Lib.debug(networkDebugFlag,"Transition to CLOSED");
 				c.currentState = CLOSED;
@@ -461,33 +462,33 @@ class Connection {
 		},
 		CLOSING {
 			@Override
-			int send(Connection c, byte[] buffer) {
+			int send(Socket c, byte[] buffer) {
 				// Can't send more data on a closing connection
 				return -1;
 			}
 			
 			@Override
-			void timer(Connection c) {
+			void timer(Socket c) {
 				c.transmit(MailMessage.FIN);
 			}
 			
 			@Override
-			void syn(Connection c, MailMessage msg) {
+			void syn(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.SYN | MailMessage.ACK);
 			}
 			
 			@Override
-			void data(Connection c, MailMessage msg) {
+			void data(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.FIN);
 			}
 			
 			@Override
-			void stp(Connection c, MailMessage msg) {
+			void stp(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.FIN);
 			}
 			
 			@Override
-			void fin(Connection c, MailMessage msg) {
+			void fin(Socket c, MailMessage msg) {
 				c.transmit(MailMessage.FIN | MailMessage.ACK);
 				Lib.debug(networkDebugFlag,"Transition to CLOSED");
 				c.currentState = CLOSED;
@@ -495,7 +496,7 @@ class Connection {
 			}
 
 			@Override
-			void finack(Connection c, MailMessage msg) {
+			void finack(Socket c, MailMessage msg) {
 				Lib.debug(networkDebugFlag,"Transition to CLOSED");
 				c.currentState = CLOSED;
 				c.finished();
@@ -505,11 +506,11 @@ class Connection {
 		DEADLOCK {};
 
 		/** an app called connect() */
-		void connect(Connection c) {}
+		void connect(Socket c) {}
 		/** an app called accept() */
-		void accept(Connection c) {}
+		void accept(Socket c) {}
 		/** an app called read() */
-		byte[] recv(Connection c, int maxBytes) {
+		byte[] recv(Socket c, int maxBytes) {
 			while (c.residualData.size() < maxBytes) {
 				MailMessage msg = c.receiveWindow.remove();
 				if (msg == null)
@@ -522,7 +523,7 @@ class Connection {
 			return c.residualData.dequeue(Math.min(c.residualData.size(), maxBytes));
 		}
 		/** an app called write(). */
-		int send(Connection c, byte[] buffer) {
+		int send(Socket c, byte[] buffer) {
 			try {
 				c.sendBuffer.write(buffer);
 			} catch (IOException e) {}
@@ -530,26 +531,26 @@ class Connection {
 			return buffer.length;
 		} 
 		/** an app called close(). */
-		void close(Connection c) {}
+		void close(Socket c) {}
 		/** the retransmission timer ticked. */
-		void timer(Connection c) {
+		void timer(Socket c) {
 			Lib.debug(networkDebugFlag,"Retransmitting unacknowledged packets");
 			((NetKernel) Kernel.kernel).postOffice.enqueue(c.sendWindow.packets());
 		}
 		/** a SYN packet is received (a packet with the SYN bit set). */
-		void syn(Connection c, MailMessage msg) {} 
+		void syn(Socket c, MailMessage msg) {} 
 		/** a SYN/ACK packet is received (a packet with the SYN and ACK bits set). */
-		void synack(Connection c, MailMessage msg) {}
+		void synack(Socket c, MailMessage msg) {}
 		/** a data packet is received (a packet with none of the SYN, ACK, STP, or FIN bits set). */
-		void data(Connection c, MailMessage msg) {}
+		void data(Socket c, MailMessage msg) {}
 		/** an ACK packet is received (a packet with the ACK bit set). */
-		void ack(Connection c, MailMessage msg) {}
+		void ack(Socket c, MailMessage msg) {}
 		/** a STP packet is received (a packet with the STP bit set). */
-		void stp(Connection c, MailMessage msg) {}
+		void stp(Socket c, MailMessage msg) {}
 		/** a FIN packet is received (a packet with the FIN bit set). */
-		void fin(Connection c, MailMessage msg) {}
+		void fin(Socket c, MailMessage msg) {}
 		/** a FIN/ACK packet is received (a packet with the FIN and ACK bits set). */
-		void finack(Connection c, MailMessage msg) {}
+		void finack(Socket c, MailMessage msg) {}
 	}
 	
 	private static class Window {
