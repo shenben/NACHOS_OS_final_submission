@@ -119,8 +119,60 @@ This thread works like waitUntil, where it loops through the existing sockets an
 	\item Close a connection that doesn't exist
 	\item Close a connection that exists
 	\subitem Check that it's actually closed
+	\item Close a connection as the sender and as the receiver
+	\subitem Check 
 	\item Close a connection twice in a row
+	\subitem Check that errors don't occur
+	\item Close a connection with a lot of data waiting
+	\subitem Check that sender 
 \end{itemize}
-\subsection{title}
-
+\subsection{read()}
+\begin{itemize}
+	\item Read from an open socket
+	\subitem Check that it doesn't block
+	\item Read from a closed socket with data remaining
+	\subitem Check that it doesn't block
+	\subitem Check that data is returned
+	\subitem Return value?
+	\item Read from an empty socket
+	\subitem Check that it returns 0 w/o blocking
+\end{itemize}
+\subsection{write()}
+\begin{itemize}
+	\item Write to an open socket
+	\item Write to a closed socket
+	\subitem Check that it returns -1 immediately
+\end{itemize}
+\subsection{Connection}
+\begin{itemize}
+	\item Write to a connection and read from that connection on the receiving node
+	\subitem Check that output matches input
+	\subitem Check that window size never exceeds 16 packets (how?)
+	\item Write to both sides of a connection simultaneously
+	\item Read from both sides of a connection simultaneously
+	\item Write/read to/from a connection with 10\% loss rate
+	\subitem Check that output matches input
+	\item Write a large amount of data into an open connection and read it on the receiving node
+	\subitem Check that output matches input
+\end{itemize}
+\subsection{Chat client/server}
+\begin{itemize}
+	\item Broadcast a message to all clients
+	\subitem Check that it works for small numbers and large numbers
+	\subitem Check that output matches input for every client
+	\subitem Check that sending a message doesn't interleave with receiving a message
+	\item Connect a client, then drop the client
+	\item Connect a client, drop the client, then reconnect that same client
+	\item Connect multiple clients
+	\item Drop multiple clients
+	\item Reconnect multiple clients
+	\item Broadcast multiple messages
+	\subitem Check that the order of the messages is preserved for a given sender
+	\item Quit the client
+	\subitem Check that client exists gracefully (how?) after getting a single '.'
+	\item Quit the server
+	\subitem Check that the server exists upon receiving anything on stdin
+	\subitem Check that all clients get a message about server closing
+	
+\end{itemize}
 \end{document}

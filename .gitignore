@@ -1,3 +1,6 @@
 *.class
 *.swp
 *.o
+*.aux
+*.log
+
