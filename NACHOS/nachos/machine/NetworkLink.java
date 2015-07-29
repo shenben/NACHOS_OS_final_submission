@@ -300,7 +300,7 @@ public class NetworkLink {
      * from accidentally interfering with this network.
      */
     public static final byte networkID;
-
+    
     static {
 	hash = System.getProperty("user.name").hashCode();
 	portBase = 0x4E41 + Math.abs(hash%0x4E41);

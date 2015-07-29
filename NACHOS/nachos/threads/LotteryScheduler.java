@@ -101,7 +101,7 @@ public class LotteryScheduler extends PriorityScheduler {
         for (int i = 0; i < 10; i++)
         {
                 threads[i].fork();
-                ((LotteryScheduler.ThreadState)threads[i].schedulingState).setPriority(50*i);
+           //     ((LotteryScheduler.ThreadState)threads[i].schedulingState).setPriority(50*i);
         }
         KThread.yield();
 	}
