@@ -27,7 +27,7 @@ Ports are mapped to sockets for both incoming and outgoing connections.
 \paragraph{Overview}
 The \texttt{connect()} syscall takes as arguments the host address and the port to which a connection will be opened. It begins by disabling interrupts and creating a new socket object s, which is assigned a valid, free port in the range (0,127). Next, the \texttt{state} member is set to \texttt{SYN\_SENT} and a \texttt{SYN} packet is sent out on the connection. 
 
-At this point, the socket blocks its handler thread until it receives a SYN/ACK interrupt from the network layer. Alternatively, a timeout from the alarm clock can break the code (how?). Once the \texttt{SYN/ACK} has arrived, \texttt{s.state} is set to \texttt{ESTABLISHED} and interrupts are re-enabled. At this point, the connection has been successfully opened and the function returns the integer value of sockets associated file descriptor.
+At this point, the socket blocks its handler thread until it receives a SYN/ACK interrupt from the network layer. Alternatively, a timeout from the alarm clock can break the code (how?). Once the \texttt{SYN/ACK} has arrived, \texttt{s.state} is set to \texttt{ESTABLISHED} and interrupts are re-enabled. At this point, the connection has been successfully opened and the function returns the integer value of socket's associated file descriptor. \\
 
 
 
@@ -50,8 +50,12 @@ int connect(host, port){
 \end{lstlisting}
 
 \subsection{accept()}
+\paragraph{Overview}
+The \texttt{accept()} syscall takes as arguments a port on which to accept a connection. It begins by disabling interrupts and checking for a waiting connection on the supplied port. If there is a waiting connection, a new \texttt{socket} object is created and assigned to that port. Otherwise, -1 is immediately returned.
 
-Pseudocode:
+Next, the TCP state of the socket is set to \texttt{ESTABLISHED} and a \texttt{SYN/ACK} packet is sent out. Interrupts are re-enabled and the method returns the socket's associated file descriptor.\\
+
+\noindent Pseudocode:
 
 \begin{lstlisting}
 int acccept(port){
@@ -67,7 +71,8 @@ int acccept(port){
 \end{lstlisting}
 
 \subsection{write()}
-
+\paragraph{Overview}
+The \texttt{write()} syscall extends the implementation from phase 2 with special handling for socket objects ... 
 \begin{lstlisting}
 int write(fileDescriptor, buffer, count){
 	...
@@ -77,6 +82,12 @@ int write(fileDescriptor, buffer, count){
 \end{lstlisting}
 
 \subsection{read()}
+\paragraph{Overview}
+The \texttt{read()} syscall extends the implementation from phase 2 for the case in which it encounters a \texttt{socket} object. As in the previous implementation, \texttt{read()} takes as input the file descriptor, a buffer into which to place the read data and a number of bytes of data to read.
+
+If the socket is open, \texttt{read()} will read up to the number of requested bytes, assuming that there are that many in the buffer. If there are fewer than requested then the entire buffer is retrieved and the number of bytes read is returned.
+
+If the socket is closed and still has data, then read will work in the same way as before, with the difference that it will delete the socket 
 
 \begin{lstlisting}
 int read(fileDescriptor, buffer, count){
@@ -99,9 +110,8 @@ int read(fileDescriptor, buffer, count){
 \end{lstlisting}
 
 \section{Threads}
-
-
-
+\paragraph{Overview}
+There are three primary threads responsible for the handling of network communication, \texttt{send}, \texttt{receive} and \texttt{timeout}.
 \subsection{Send thread}
 
 \subsection{Receive thread}
@@ -157,6 +167,8 @@ This thread works like waitUntil, where it loops through the existing sockets an
 	\item Write to a closed socket
 	\subitem Check that it returns -1 immediately
 \end{itemize}
+\subsection{send()}
+\subsection{receive()}
 \subsection{Connection}
 \begin{itemize}
 	\item Write to a connection and read from that connection on the receiving node
