@@ -10,26 +10,33 @@
 
 \maketitle
 
+\section{Socket object}
+\paragraph{Overview}
+The socket object keeps track of the state of the network sockets on both the client and server side. It also maintains the TCP state machine and the mapped ports, as well as the associated \texttt{FileObject} file descriptor.
+
+\paragraph{TCP state machine}
+
+The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
+
+\paragraph{Port mapping}
+Ports are mapped to sockets for both incoming and outgoing connections.
 
 \section{Networking syscalls}
 \subsection{connect()}
 
-\paragraph{Port mapping}
-Ports are mapped to sockets for both incoming and outgoing connections.\\
+\paragraph{Overview}
+The \texttt{connect()} syscall takes as arguments the host address and the port to which a connection will be opened. It begins by disabling interrupts and creating a new socket object s, which is assigned a valid, free port in the range (0,127). Next, the \texttt{state} member is set to \texttt{SYN\_SENT} and a \texttt{SYN} packet is sent out on the connection. 
+
+At this point, the socket blocks its handler thread until it receives a SYN/ACK interrupt from the network layer. Alternatively, a timeout from the alarm clock can break the code (how?). Once the \texttt{SYN/ACK} has arrived, \texttt{s.state} is set to \texttt{ESTABLISHED} and interrupts are re-enabled. At this point, the connection has been successfully opened and the function returns the integer value of sockets associated file descriptor.
+
+
 
 
 
 
 \noindent Pseudocode:
 
- Attempt to initiate a new connection to the specified port on the specified
- remote host, and return a new file descriptor referring to the connection.
- connect() does not give up if the remote host does not respond immediately.
- 
- Returns the new file descriptor, or -1 if an error occurred.
-
 \begin{lstlisting}
-
 int connect(host, port){
 	disable interrupts
 	create a new socket s and assign it to a free port in (0,127)
@@ -61,22 +68,8 @@ int acccept(port){
 
 \subsection{write()}
 
-write() allows the connection to write to the network. Attempts to write a buffer of bytes to
-the socket. If the socket is not Established it returns 1.
 \begin{lstlisting}
 int write(fileDescriptor, buffer, count){
-	
-	if(state == ESTABLISHED && offset + length <= buf.length))
-	{
-		new packet
-		int bytePos = offset;
-		int endPos = offset + length;
-		while(bytePos < endPos){
-		
-		System.arraycopy(buf, bytePos, contents, 8, amountSend);
-		}
-	}
-	
 	...
 	<netcode>
 	...
@@ -84,7 +77,7 @@ int write(fileDescriptor, buffer, count){
 \end{lstlisting}
 
 \subsection{read()}
-read() allows the connection to read from the network. Attempts to read a number of bytes from the socket. If it is closed and there are no bytes in the buffer, it will return 1, otherwise return the number of bytes read. It does not block.
+
 \begin{lstlisting}
 int read(fileDescriptor, buffer, count){
 	...
@@ -96,7 +89,7 @@ int read(fileDescriptor, buffer, count){
 		if (socket isn't empty){
 			read count bytes
 			if (socket is empty)
-				delete socket		
+				delete socket
 			return bytes successfully read	
 		}	
 	}
@@ -127,7 +120,6 @@ This thread works like waitUntil, where it loops through the existing sockets an
 	\item Open multiple connections to the same receiving port
 	\subitem Check that they all send/receive data
 	\item Open a connection, close it and re-open it
-	\item packet drop during connect()
 \end{itemize}
 \subsection{accept()}
 \begin{itemize}
@@ -135,7 +127,6 @@ This thread works like waitUntil, where it loops through the existing sockets an
 	\item Accept multiple waiting connections on the same port
 	\item Accept multiple waiting connections to different ports
 	\item Return from accept() on a port that doesn't have a connection waiting
-	\item packet drop during accept()
 \end{itemize}
 \subsection{close()}
 \begin{itemize}
@@ -198,18 +189,4 @@ This thread works like waitUntil, where it loops through the existing sockets an
 	\subitem Check that all clients get a message about server closing
 	
 \end{itemize}
-<<<<<<< HEAD
-=======
-\subsection{read/write()}
-\begin{itemize}
-	\item simple read write.
-	\item read returns -1 during remote host disconnection 
-	\item read returns even after disconnect
-	\item write returns -1 during remote host disconnect
-	\item write flushes data after close
-\end{itemize}
-
-\subsection{title}
-
->>>>>>> 6483c73a7dd87d4af4381d46766044fcaf188dbd
 \end{document}

@@ -4,5 +4,4 @@
 *.aux
 *.log
 *.pdf
-
-
+*.gz
