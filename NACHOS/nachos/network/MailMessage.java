@@ -78,6 +78,14 @@ public class MailMessage {
     public int dstPort;
     /** The port used by this message on the source machine. */
     public int srcPort;
+    
+    /**/
+    /** Flags on this message */
+	 int flags;
+	/** Sequence number of this message */
+	 int sequence;
+    /**/
+    
     /** The contents of this message, excluding the mail message header. */
     public byte[] contents;
 
@@ -102,4 +110,17 @@ public class MailMessage {
      * <tt>portLimit - 1</tt>.
      */    
     public static final int portLimit = 128;
+    
+    
+    /**
+	 * Valid packet flags
+	 */
+	 static final int DATA = 0;
+	 static final int SYN = 1;
+	 static final int ACK = 2;
+	 static final int STP = 4;
+	 static final int FIN = 8;
+	 
+	 /** Convenience to initializing */
+	 static final byte[] EMPTY_CONTENT = new byte[0];
 }
