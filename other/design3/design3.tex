@@ -121,10 +121,54 @@ There are three primary threads responsible for the handling of network communic
 
 \subsection{Send thread}
 This \texttt{send} thread iterates through all of the existing socket's outgoing buffers and sends the data out as expected.
+
+\begin{lstlisting}
+sendPacket()
+{
+        socketLock.acquire
+        unacknowledgedPackets.add
+        NetKernel.packetManager.addMessage
+        socketLock.release
+}
+\end{lstlisting}
 \subsection{Receive thread}
 The \texttt{receive} thread iterates through all of the existing socket's incoming buffers and passes the data up.
+\begin{lstlisting}
+public void recievePacket (int port)
+{
+	Lib.asserttrue(port>=0 && box<port < queue.length)
+	MailMessage mail = queue[port].removeFirst();
+	If(Lib.test(dbgNet))
+	// got mail on the port
+	Return mail
+}
+\end{lstlisting}
 \subsection{Timeout thread}
 This thread works like waitUntil, where it loops through the existing sockets and checks for any that have lived past their timeout value. If they have, it closes that socket.
+\begin{lstlisting}
+timeOutEvent()
+{
+	switch(state)
+	{
+	case SYN_SENT:
+	sendSYN
+	break
+	case ESTABLISHED:
+	case STOP_SENT:
+	socketLock.acquire
+	for(Packet p: unacknowledgedPackets)
+	{
+	NetKernel.packetManager.addMessage
+	}
+	socketLock.release
+	break;
+	case CLOSING:
+	sendFIN
+	break
+	}
+}
+
+\end{lstlisting}
 
 \section{Chat}
 \subsection{Client}
