@@ -138,6 +138,7 @@ class Socket {
 		stateLock.release();
 	}
 	
+	
 	/**
 	 * Queue up data in buffer for sending 
 	 */
