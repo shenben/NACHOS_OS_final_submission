@@ -9,17 +9,18 @@
 \begin{document}
 
 \maketitle
+\tableofcontents
 
 \section{Socket object}
 \paragraph{Overview}
 The socket object keeps track of the state of the network sockets on both the client and server side. It also maintains the TCP state machine and the mapped ports, as well as the associated \texttt{FileObject} file descriptor.
 
-\paragraph{TCP state machine}
-
-The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
-
 \paragraph{Port mapping}
 Ports are mapped to sockets for both incoming and outgoing connections.
+
+\subsection{TCP state machine}
+
+The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
 
 \section{Networking syscalls}
 \subsection{connect()}
@@ -119,10 +120,16 @@ int read(fileDescriptor, buffer, count){
 There are three primary threads responsible for the handling of network communication, \texttt{send}, \texttt{receive} and \texttt{timeout}.
 
 \subsection{Send thread}
-This thread handles
+This \texttt{send} thread iterates through all of the existing socket's outgoing buffers and sends the data out as expected.
 \subsection{Receive thread}
+The \texttt{receive} thread iterates through all of the existing socket's incoming buffers and passes the data up.
 \subsection{Timeout thread}
 This thread works like waitUntil, where it loops through the existing sockets and checks for any that have lived past their timeout value. If they have, it closes that socket.
+
+\section{Chat}
+\paragraph{Overview}
+\subsection{Client}
+\subsection{Server}
 
 \section{Test cases}
 \subsection{connect()}
