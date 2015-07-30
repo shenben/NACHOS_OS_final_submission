@@ -127,8 +127,24 @@ The \texttt{receive} thread iterates through all of the existing socket's incomi
 This thread works like waitUntil, where it loops through the existing sockets and checks for any that have lived past their timeout value. If they have, it closes that socket.
 
 \section{Chat}
-\paragraph{Overview}
 \subsection{Client}
+\paragraph{Overview} The chat client maintains three buffers, \texttt{outgoingMessage}, \\ \texttt{incomingMessage} and \texttt{temp} and has a socket connection to the server on (server-incoming) port 15. Each of the buffers has size equal to the predefined maximum character count for a line.
+
+\texttt{outgoingMessage} is used to store and buffer user-typed messages, \\ \texttt{incomingMessage} buffers messages from the server and \texttt{temp} is used as a swap buffer.
+
+The client itself runs in an indefinite loop, until it receives a '.' character as input, at which point it closes its socket connection and returns exit code 0 for success. 
+
+In each loop iteration, the client first reads pending user input into \\ \texttt{outgoingMessage}, copying it past any existing data in the buffer. It then checks that there is user input to be handled, and if there is, loops through \texttt{outgoingMessage}, copying data up the newline character into \texttt{temp} and moving the remaining data to the beginning of the buffer. \texttt{temp} is then written to the socket. This continues until there are no more newline characters in \texttt{outgoingMessage}. 
+
+If there is no user input pending, then the client performs a \texttt{read} operation on the socket, filling \texttt{incomingMessage} with data starting from the end of the existing data, up to the end of the buffer. After the read completes, the client loops through \texttt{incomingMessage}, copying data into \texttt{temp} up to each \textbackslash n character, moving the data in \texttt{incomingMessage} to the beginning of the buffer and printing the contents of \texttt{temp} to the screen. \\
+
+\noindent Pseudocode:
+
+\begin{lstlisting}
+int main(serverAddress){
+		
+}
+\end{lstlisting}
 \subsection{Server}
 
 \section{Test cases}

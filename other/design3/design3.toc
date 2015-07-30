@@ -18,16 +18,16 @@
 \contentsline {subsection}{\numberline {4.2}Receive thread}{4}
 \contentsline {subsection}{\numberline {4.3}Timeout thread}{4}
 \contentsline {section}{\numberline {5}Chat}{5}
-\contentsline {paragraph}{Overview}{5}
 \contentsline {subsection}{\numberline {5.1}Client}{5}
+\contentsline {paragraph}{Overview}{5}
 \contentsline {subsection}{\numberline {5.2}Server}{5}
 \contentsline {section}{\numberline {6}Test cases}{5}
 \contentsline {subsection}{\numberline {6.1}connect()}{5}
-\contentsline {subsection}{\numberline {6.2}accept()}{5}
-\contentsline {subsection}{\numberline {6.3}close()}{5}
+\contentsline {subsection}{\numberline {6.2}accept()}{6}
+\contentsline {subsection}{\numberline {6.3}close()}{6}
 \contentsline {subsection}{\numberline {6.4}read()}{6}
-\contentsline {subsection}{\numberline {6.5}write()}{6}
-\contentsline {subsection}{\numberline {6.6}send()}{6}
-\contentsline {subsection}{\numberline {6.7}receive()}{6}
-\contentsline {subsection}{\numberline {6.8}Connection}{6}
+\contentsline {subsection}{\numberline {6.5}write()}{7}
+\contentsline {subsection}{\numberline {6.6}send()}{7}
+\contentsline {subsection}{\numberline {6.7}receive()}{7}
+\contentsline {subsection}{\numberline {6.8}Connection}{7}
 \contentsline {subsection}{\numberline {6.9}Chat client/server}{7}
