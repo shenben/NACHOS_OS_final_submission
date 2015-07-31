@@ -142,30 +142,43 @@ This thread works like waitUntil, where it loops through the existing sockets an
 
 The client itself runs in an indefinite loop, until it receives a '.' character as input, at which point it closes its socket connection and returns exit code 0 for success. 
 
-In each loop iteration, the client first reads pending user input into \\ \texttt{outgoingMessage}, copying it past any existing data in the buffer. It then checks that there is user input to be handled, and if there is, loops through \texttt{outgoingMessage}, copying data up the newline character into \texttt{temp} and moving the remaining data to the beginning of the buffer. \texttt{temp} is then written to the socket. This continues until there are no more newline characters in \texttt{outgoingMessage}. 
+In each loop iteration, the client first reads pending user input into \\ \texttt{outgoingMessage}, copying it past any existing data in the buffer. It then checks that there is user input to be handled, and if there is, loops through \texttt{outgoingMessage}, copying data up the newline character into \texttt{temp} and moving the remaining data to the beginning of the buffer. \texttt{temp} is then written to the socket. This continues until there are no more newline characters in \texttt{outgoingMessage}. In this way, users can send multiple lines of text (separated by newline characters) with their order preserved (i.e. the server will always receive them in the order they are typed).
 
 If there is no user input pending, then the client performs a \texttt{read} operation on the socket, filling \texttt{incomingMessage} with data starting from the end of the existing data, up to the end of the buffer. After the read completes, the client loops through \texttt{incomingMessage}, copying data into \texttt{temp} up to each \textbackslash n character, moving the data in \texttt{incomingMessage} to the beginning of the buffer and printing the contents of \texttt{temp} to the screen. \\
+
+\pagebreak
 
 \noindent Pseudocode:
 
 \begin{lstlisting}
 int main(serverAddress){
-	create incomingMessage, outgoingMessage and temp buffers
-	create a socket connected to port 15
-	while (true){
-		read user input into incomingMessage, putting it after existing data up to the end of the buffer
-		if incomingMessage has data 
-			while incomingMessage has a newline {
-				// newlineIndex points to the location of the newline char
-				memcpy(temp,incomingMessage, newlineIndex)
-				if temp is '.'
-					close s
-					
-			
+  create incomingMessage, outgoingMessage and temp buffers
+  create a socket connected to destination (serverAddress,15)
+  while (true){
+    // fill outgoingMessage up to the end
+    bytesToRead = MAX_CHAR_COUNT - len(outgoingMessage)
+	read bytesToRead bytes into outgoingMessage from user input
+	if outgoingMessage has data {
+		// loop until outgoingMessage is empty
+		while outgoingMessage has a '\n' {
+			copy characters up to '\n' into temp
+			if temp is '.'
+				close s
+				return 0 for success
+			write temp to the socket
+		}
+	} else {
+		// fill incomingMessage up to the end
+		bytesToRead = MAX_CHAR_COUNT - len(incomingMessage)
+		read bytesToRead bytes from socket into incomingMessage
+		if incomingMessage has data {
+			// loop until incomingMessage is empty
+			while incomingMessage has a '\n' {
+				copy characters up to '\n' into temp
+				'shift' everything past '\n' the beginning
+				print contents of temp to screen
 			}
-		
-		
-	
+		}
 	}	
 }
 \end{lstlisting}
