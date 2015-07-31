@@ -19,16 +19,20 @@
 \maketitle
 \tableofcontents
 
-\section{Socket object}
+\section{Data structures}
+
+\subsection{Socket object}
 \paragraph{Overview}
-The socket object keeps track of the state of the network sockets on both the client and server side. It also maintains the TCP state machine and the mapped ports, as well as the associated \texttt{FileObject} file descriptor.
+The socket object keeps track of all state associated with socket operations, including the TCP state machine and the mapped ports, as well as the associated \texttt{FileObject} file descriptor.
 
-\paragraph{Port mapping}
-Ports are mapped to sockets for both incoming and outgoing connections.
 
-\subsection{TCP state machine}
+\subsubsection{Send and receive buffers}
+
+\subsubsection{TCP state machine}
 
 The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
+
+\subsection{Sliding window}
 
 \section{Networking syscalls}
 \subsection{connect()}
@@ -47,56 +51,36 @@ At this point, the socket blocks its handler thread until it receives a SYN/ACK 
 
 \begin{lstlisting}
 int connect(host, port){
-	disable interrupts
-	create a new socket s and assign it to a free port in (0,127)
+	create a new socket s
+	assign s a free port in (0,127)
 	s.state = SYN_SENT
 	send SYN packet
-	block until SYN/ACK recv'd // timeout breaks this
+	block until SYN/ACK recv'd // timeout breaks this?
 	s.state = ESTABLISHED
-	enable interrupts
 	return s.fileDescriptor
 }
 \end{lstlisting}
 
 \subsection{accept()}
 \paragraph{Overview}
-The \texttt{accept()} syscall takes as arguments a port on which to accept a connection. It begins by disabling interrupts and checking for a waiting connection on the supplied port. If there is a waiting connection, a new \texttt{socket} object is created and assigned to that port. Otherwise, -1 is immediately returned.
+The \texttt{accept()} syscall takes as arguments a port on which to accept a connection and is serviced by the receive thread. It begins by checking for a waiting connection on the supplied port. If there is a waiting connection, a new \texttt{socket} object is created and assigned to that port. Otherwise, -1 is immediately returned.
 
-Next, the TCP state of the socket is set to \texttt{ESTABLISHED} and a \texttt{SYN/ACK} packet is sent out. Interrupts are re-enabled and the method returns the socket's associated file descriptor.\\
+Next, the TCP state of the socket is set to \texttt{ESTABLISHED} and a \texttt{SYN/ACK} packet is sent out. Lastly, the method returns the socket's associated file descriptor.\\
 
 \noindent Pseudocode:
 
 \begin{lstlisting}
 int acccept(port){
-	disable interrupts
 	if there are connections waiting on port
 		create a new socket s, assign it that port
 	else return -1
 	s.state = ESTABLISHED
 	send SYN/ACK
-	enable interrupts
 	return s.fileDescriptor
 }
 \end{lstlisting}
 
-\subsection{write()}
-\paragraph{Overview}
-The \texttt{write()} syscall extends the implementation from phase 2 with special handling for sockets. It attempts to write the supplied number of bytes from the supplied buffer into the specified socket, returning -1 on failure. It succeeds if the connection is already established and the write (outgoing) buffer has room for the entire message.
-\begin{lstlisting}
-int write(fileDescriptor, buffer, count){
-	...
-	if (s.state == ESTABLISHED && s.writeBuffer.bytesFree() <= count)
-		write to outgoing buffer
-		//post office handles packet creation
-		
-	...
-}
-\end{lstlisting}
-
 \subsection{read()}
-
-\section{Sliding window}
-
 \paragraph{Overview}
 The \texttt{read()} syscall extends the implementation from phase 2 for the case in which it encounters a \texttt{socket} object. As in the previous implementation, \texttt{read()} takes as input the file descriptor, a buffer into which to place the read data and a number of bytes of data to read.
 
@@ -120,9 +104,53 @@ int read(fileDescriptor, buffer, count){
 		}	
 	}
 }
-
-
 \end{lstlisting}
+
+\subsection{write()}
+\paragraph{Overview}
+The \texttt{write()} syscall extends the implementation from phase 2 with special handling for sockets. It attempts to write the supplied number of bytes from the supplied buffer into the specified socket, returning -1 on failure. It succeeds if the connection is already established and the write (outgoing) buffer has room for the entire message. Alternatively, the implementation could write up to the end of the outgoing buffer and return the number of bytes written.\\
+
+\noindent Pseudocode: 
+
+\begin{lstlisting}
+int write(fileDescriptor, buffer, count){
+	...
+	// no partial writes
+	if socket is ESTABLISHED and the write buffer has room
+		write to the outgoing buffer
+		//post office handles packet creation
+	...
+}
+\end{lstlisting}
+
+\subsection{open()}
+
+\subsection{close()}
+\paragraph{Overview}
+The \texttt{close()} syscall extends the existing implementation to handle sockets and is serviced by the \texttt{receive} thread. It begins by checking the state of the socket; if the socket is in state \texttt{ESTABLISHED} and the outgoing window is empty, it will send a \texttt{FIN} packet to the other end and set the socket state to \texttt{CLOSING}. 
+
+If there are still pending packets in the outgoing window, \texttt{close()} sends an \texttt{STP} packet to the other end and sets the socket state to \texttt{STP\_SENT}. Attempting to close a socket that is not in \texttt{ESTABLISHED} returns -1.
+
+\pagebreak
+
+\noindent Pseudocode:
+
+\begin{lstlisting}
+int close(fileDescriptor) {
+	if s.state == ESTABLISHED {
+		if outgoing window is empty {
+			send FIN;
+			s.state = CLOSING;
+		} else {
+			send STP;
+			s.state = STP_SENT;
+			return 0;
+		}
+	} else return -1;
+}
+\end{lstlisting}
+
+
 \section{Threads}
 \paragraph{Overview}
 There are three primary threads responsible for the handling of network communication, \texttt{send}, \texttt{receive} and \texttt{timeout}.
