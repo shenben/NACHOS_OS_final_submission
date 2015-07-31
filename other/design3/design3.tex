@@ -150,7 +150,23 @@ If there is no user input pending, then the client performs a \texttt{read} oper
 
 \begin{lstlisting}
 int main(serverAddress){
+	create incomingMessage, outgoingMessage and temp buffers
+	create a socket connected to port 15
+	while (true){
+		read user input into incomingMessage, putting it after existing data up to the end of the buffer
+		if incomingMessage has data 
+			while incomingMessage has a newline {
+				// newlineIndex points to the location of the newline char
+				memcpy(temp,incomingMessage, newlineIndex)
+				if temp is '.'
+					close s
+					
+			
+			}
 		
+		
+	
+	}	
 }
 \end{lstlisting}
 \subsection{Server}
