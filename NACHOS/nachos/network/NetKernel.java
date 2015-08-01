@@ -8,7 +8,6 @@ import java.util.Random;
 
 import nachos.machine.*;
 import nachos.threads.*;
-import nachos.vm.*;
 import nachos.userprog.*;
 
 /**

@@ -1,7 +1,6 @@
 package nachos.network;
 
 import nachos.machine.*;
-import nachos.vm.*;
 import nachos.userprog.*;
 
 /**
