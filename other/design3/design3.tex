@@ -35,7 +35,8 @@ The socket object contains a TCP state machine implementing the seven TCP states
 \subsection{Client object}
 
 \subsection{Sliding window}
-
+\paragraph{Overview}
+The sliding window has a fixed size of 16 packets, and then the connection must wait for an acknowledgment.This works for both directions of traffic. These rules apply for multiple connections. This means there will be a limit on the receive buffer. 
 \subsection{Chat}
 
 \section{Networking syscalls}
@@ -128,7 +129,8 @@ int write(fileDescriptor, buffer, count){
 \end{lstlisting}
 
 \subsection{open()}
-
+\paragraph{Overview}
+The \texttt{open()} syscall
 \subsection{close()}
 \paragraph{Overview}
 The \texttt{close()} syscall extends the existing implementation to handle sockets and is serviced by the \texttt{receive} thread. It begins by checking the state of the socket; if the socket is in state \texttt{ESTABLISHED} and the outgoing window is empty, it will send a \texttt{FIN} packet to the other end and set the socket state to \texttt{CLOSING}. 
