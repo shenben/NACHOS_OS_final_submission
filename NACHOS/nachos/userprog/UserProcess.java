@@ -976,6 +976,17 @@ public class UserProcess {
 				return null;
 			return descriptor[fileDescriptor];
 		}
+		public int getFileDesc() 
+		{
+			for (int i = 0; i < descriptor.length; i++) {
+				if (descriptor[i] == null)
+					return i;
+			}
+			return -1;
+		}
+		
+		
+		
 		//variable : array of OpenFiles, up to 16.
 		public OpenFile descriptor[] = new OpenFile[maxOpenFiles];
 	}

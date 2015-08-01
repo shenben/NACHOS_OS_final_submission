@@ -126,73 +126,67 @@ public class NetProcess extends UserProcess {
 	 * @param port
 	 */
 	private int handleConnect(int host, int port) {
+		
+		
+		
 		Lib.assertTrue(port >= 0 && port < Packet.linkAddressLimit);
-		//int fileDesc = getFileDescriptor();
-		
-		int i;
-		for(i=0; i <descriptorManager.descriptor.length;i++)
-		{
-			if(descriptorManager.descriptor[i]==null)
-			{
-				break;
-			}
-			else
-				i=-1;
-		}
-		
-		if (i != -1) {
+		int fileDesc = descriptorManager.getFileDesc();	//get first empty space
+		if (fileDesc != -1) {
 			try {
-				descriptorManager.descriptor[i] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
-				
+				//descriptorManager.descriptor[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
+				/*
+
+				 //fileTable[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
+				  
+					//Increment the number of active references there are to a file
+					 *-1 if marked for deletion
 				//FileRef.referenceFile(fileTable[fileDesc].getName());
+				*/
+				descriptorManager.add(new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port)));
+				
 			} catch (ClassCastException cce) {
 				Lib.assertNotReached("Error - kernel not of type NetKernel");
 			}
 		}
-
-		return i;
+		return fileDesc;	//returns -1 if OpenFile array was full
 }
-
 
 	/**
 	 * The syscall handler for the accept syscall.
 	 * @param port
 	 */
 	private int handleAccept(int port) {
+		
 		Lib.assertTrue(port >= 0 && port < Packet.linkAddressLimit);
-		int i;
-		for(i=0; i <descriptorManager.descriptor.length;i++)
-		{
-			if(descriptorManager.descriptor[i]==null)
-			{
-				break;
-			}
-			else
-				i=-1;
-		}
-		if (i!= -1) {
+		int fileDesc = descriptorManager.getFileDesc(); //get first unused file descriptor, -1 if full
+		
+		if (fileDesc != -1) {
 			Socket c = null;
 			try {
 				// Try to get an entry in the file table
-	//			c = ((NetKernel) kernel).postOffice.accept(port);
+				c = ((NetKernel) kernel).postOffice.accept(port);
 			} catch (ClassCastException cce) {
 				Lib.assertNotReached("Error - kernel not of type NetKernel");
 			}
 
 			if (c != null) {
-	//			fileTable[fileDesc] = new OpenSocket(c);
-	//			FileRef.referenceFile(fileTable[fileDesc].getName());
-	//			return fileDesc;
+				descriptorManager.add(new OpenSocket(c));
+				//fileTable[fileDesc] = new OpenSocket(c);
+				
+				//FileRef.referenceFile(fileTable[fileDesc].getName());
+				return fileDesc;
 			}
 		}
 
 		return -1;
+		
 	}
 
 	/**
 	 * A class to represent sockets that extends <tt>OpenFile</tt> so it can 
 	 * reside in the process's page table.
 	 */
+	
 	private static class OpenSocket extends OpenFile {
 		OpenSocket(Socket c) {
 			super(null, c.srcPort + "," + c.destAddress + "," + c.destPort);

@@ -14,7 +14,6 @@ import nachos.threads.Condition;
 import nachos.threads.Lock;
 
 class Socket {
-	
 	private Lock stateLock = new Lock();
 	private Condition connectionEstablished;
 	//network transaction processing system state
