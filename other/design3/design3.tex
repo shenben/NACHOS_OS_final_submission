@@ -32,7 +32,11 @@ The socket object keeps track of all state associated with socket operations, in
 
 The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
 
+\subsection{Client object}
+
 \subsection{Sliding window}
+
+\subsection{Chat}
 
 \section{Networking syscalls}
 \subsection{connect()}
@@ -187,30 +191,58 @@ int main(serverAddress){
     bytesToRead = MAX_CHAR_COUNT - len(outgoingMessage)
 	read bytesToRead bytes into outgoingMessage from user input
 	if outgoingMessage has data {
-		// loop until outgoingMessage is empty
-		while outgoingMessage has a '\n' {
-			copy characters up to '\n' into temp
-			if temp is '.'
-				close s
-				return 0 for success
-			write temp to the socket
-		}
+	  // loop until outgoingMessage is empty
+  	  while outgoingMessage has a '\n' {
+	  copy characters up to '\n' into temp
+	  if temp is '.'
+  	  close s
+	  return 0 for success
+	  write temp to the socket
+	  }
 	} else {
-		// fill incomingMessage up to the end
-		bytesToRead = MAX_CHAR_COUNT - len(incomingMessage)
-		read bytesToRead bytes from socket into incomingMessage
-		if incomingMessage has data {
-			// loop until incomingMessage is empty
-			while incomingMessage has a '\n' {
-				copy characters up to '\n' into temp
-				'shift' everything past '\n' the beginning
-				print contents of temp to screen
-			}
-		}
-	}	
+	  // fill incomingMessage up to the end
+	  bytesToRead = MAX_CHAR_COUNT - len(incomingMessage)
+	  read bytesToRead bytes from socket into incomingMessage
+	  if incomingMessage has data {
+	    // loop until incomingMessage is empty
+	    while incomingMessage has a '\n' {
+	      copy characters up to '\n' into temp
+	      'shift' everything past '\n' to the beginning
+	      print contents of temp to screen
+	    }
+	  }
+	} 	
 }
 \end{lstlisting}
 \subsection{Server}
+\paragraph{Overview}
+The chat server maintains a single buffer, \texttt{temp}, of size equal to maximum number of allowed characters and runs in an indefinite loop. It immediately terminates upon input on \texttt{stdin}, returning 0 for success.
+
+Within the loop body, the server calls \texttt{accept()} on the supplied port and allocates a \texttt{client} object if there is a pending connection. It then iterates through its list of clients, reading from the clients' associated socket into the temporary buffer and copying that buffer into the client's \texttt{outgoingMessage} buffer. The server then iterates through \texttt{client.outgoingMessage}, copying and moving over newline-delimited character arrays (into \texttt{temp}) and performing \texttt{write()} operations on every client's socket.
+
+\pagebreak
+
+\noindent Pseudocode:
+
+\begin{lstlisting}
+int main(listenPort){
+  create temp buffer of size MAX_CHAR_COUNT
+  while (true){
+    // if stdin then return 0 for success
+    // accept a connection on listenPort and allocate a client
+    // client object holds socket s
+    for each client:
+      read from client.s into temp
+      copy temp into client.outgoingMessage
+      while (client.outgoingMessage has '\n'){
+        copy chars up to '\n' into temp
+        'shift' everything past '\n' to the beginning
+        for each client:
+          write temp to client.s
+      }
+  }
+}	
+\end{lstlisting}
 
 \section{Test cases}
 \subsection{connect()}
