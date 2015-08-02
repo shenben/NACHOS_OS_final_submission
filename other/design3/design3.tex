@@ -37,8 +37,6 @@ The client is the person associated with a specific socket.
 \subsection{Sliding window}
 \paragraph{Overview}
 The sliding window has a fixed size of 16 packets, and then the connection must wait for an acknowledgment.This works for both directions of traffic. These rules apply for multiple connections. This means there will be a limit on the receive buffer. 
-\subsection{Chat}
-
 \section{Networking syscalls}
 \subsection{connect()}
 
@@ -123,7 +121,6 @@ int write(fileDescriptor, buffer, count){
 	...
 }
 \end{lstlisting}
-
 \subsection{open()}
 \paragraph{Overview}
 The \texttt{open()} syscall overwrites the UserProcess implementation to handle packets. This is handled by the receive thread. The thread will only open packets if the state is \texttt{ESTABLISHED}.
