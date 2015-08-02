@@ -126,13 +126,11 @@ public class NetProcess extends UserProcess {
 	 * @param port
 	 */
 	private int handleConnect(int host, int port) {
-		
-		
-		
 		Lib.assertTrue(port >= 0 && port < Packet.linkAddressLimit);
 		int fileDesc = descriptorManager.getFileDesc();	//get first empty space
 		if (fileDesc != -1) {
 			try {
+				
 				//descriptorManager.descriptor[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
 				/*
 
@@ -142,9 +140,12 @@ public class NetProcess extends UserProcess {
 					 *-1 if marked for deletion
 				//FileRef.referenceFile(fileTable[fileDesc].getName());
 				*/
-				descriptorManager.add(new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port)));
+				OpenSocket file = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
 				
-			} catch (ClassCastException cce) {
+				descriptorManager.add(file);
+				
+				
+				} catch (ClassCastException cce) {
 				Lib.assertNotReached("Error - kernel not of type NetKernel");
 			}
 		}

@@ -48,10 +48,6 @@ The \texttt{connect()} syscall takes as arguments the host address and the port 
 At this point, the socket blocks its handler thread until it receives a SYN/ACK interrupt from the network layer. Alternatively, a timeout from the alarm clock can break the code (how?). Once the \texttt{SYN/ACK} has arrived, \texttt{s.state} is set to \texttt{ESTABLISHED} and interrupts are re-enabled. At this point, the connection has been successfully opened and the function returns the integer value of socket's associated file descriptor. \\
 
 
-
-
-
-
 \noindent Pseudocode:
 
 \begin{lstlisting}
