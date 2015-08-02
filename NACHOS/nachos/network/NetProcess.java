@@ -127,30 +127,21 @@ public class NetProcess extends UserProcess {
 	 */
 	private int handleConnect(int host, int port) {
 		Lib.assertTrue(port >= 0 && port < Packet.linkAddressLimit);
-		int fileDesc = descriptorManager.getFileDesc();	//get first empty space
-		if (fileDesc != -1) {
-			try {
-				
-				//descriptorManager.descriptor[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
-				/*
-
-				 //fileTable[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
-				  
-					//Increment the number of active references there are to a file
-					 *-1 if marked for deletion
+		int fileDesc = descriptorManager.getFileDesc();	//get first empty spot
+		if (fileDesc != -1) 
+		{
+			try 
+			{
+				descriptorManager.descriptor[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
 				//FileRef.referenceFile(fileTable[fileDesc].getName());
-				*/
-				OpenSocket file = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
-				
-				descriptorManager.add(file);
-				
-				
-				} catch (ClassCastException cce) {
+				descriptorManager.referenceFile(descriptorManager.descriptor[fileDesc].getName());
+			} catch (ClassCastException cce) {
 				Lib.assertNotReached("Error - kernel not of type NetKernel");
 			}
 		}
-		return fileDesc;	//returns -1 if OpenFile array was full
-}
+
+		return fileDesc;
+	}
 
 	/**
 	 * The syscall handler for the accept syscall.
