@@ -4,6 +4,7 @@ import nachos.machine.*;
 import nachos.threads.*;
 
 import java.io.EOFException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 
@@ -905,6 +906,97 @@ public class UserProcess {
 	
 	public class FileDescriptor
 	{
+		int references;
+		boolean delete;
+		
+		public  boolean referenceFile(String fileName) {
+			FileDescriptor ref = updateFileReference(fileName);
+			boolean canReference = !ref.delete;
+			if (canReference)
+				ref.references++;
+			finishUpdateFileReference();
+			return canReference;
+		}
+
+		/**
+		 * Decrement the number of active references there are to a file
+		 * Delete the file if necessary
+		 * @return
+		 * 		0 on success, -1 on failure
+		 */
+		public  int unreferenceFile(String fileName) {
+			FileDescriptor ref = updateFileReference(fileName);
+			ref.references--;
+			Lib.assertTrue(ref.references >= 0);
+			int ret = removeIfNecessary(fileName, ref);
+			finishUpdateFileReference();
+			return ret;
+		}
+
+		/**
+		 * Mark a file as pending deletion, and delete the file if no active references
+		 * @return
+		 * 		0 on success, -1 on failure
+		 */
+		public  int deleteFile(String fileName) {
+			FileDescriptor ref = updateFileReference(fileName);
+			ref.delete = true;
+			int ret = removeIfNecessary(fileName, ref);
+			finishUpdateFileReference();
+			return ret;
+		}
+
+		/**
+		 * Remove a file if marked for deletion and has no active references
+		 * Remove the file from the reference table if no active references
+		 * THIS FUNCTION MUST BE CALLED WITHIN AN UPDATEFILEREFERENCE LOCK!
+		 * @return
+		 * 		0 on success, -1 on failure to remove file
+		 */
+		private  int removeIfNecessary(String fileName, FileDescriptor ref) {
+			if (ref.references <= 0) {
+				globalFileReferences.remove(fileName);
+				if (ref.delete == true) {
+					if (!UserKernel.fileSystem.remove(fileName))
+						return -1;
+				}
+			}
+			return 0;
+		}
+
+		/**
+		 * Lock the global file reference table and return a file reference for modification.
+		 * If the reference doesn't already exist, create it.
+		 * finishUpdateFileReference() must be called to unlock the table again!
+		 *
+		 * @param fileName
+		 * 		File we with to reference
+		 * @return
+		 * 		FileRef object
+		 */
+		private  FileDescriptor updateFileReference(String fileName) {
+			globalFileReferencesLock.acquire();
+			FileDescriptor ref = globalFileReferences.get(fileName);
+			if (ref == null) {
+				ref = new FileDescriptor();
+				globalFileReferences.put(fileName, ref);
+			}
+
+			return ref;
+		}
+
+		/**
+		 * Release the lock on the global file reference table
+		 */
+		private  void finishUpdateFileReference() {
+			globalFileReferencesLock.release();
+		}
+
+		/** Global file reference tracker & lock */
+		private HashMap<String, FileDescriptor> globalFileReferences = new HashMap<String, FileDescriptor> ();
+		private Lock globalFileReferencesLock = new Lock();
+		
+		
 		public int add(int index, OpenFile file) 
 		{
 			if (index < 0 || index >= maxOpenFiles)
