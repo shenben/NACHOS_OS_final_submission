@@ -126,14 +126,26 @@ int write(fileDescriptor, buffer, count){
 
 \subsection{open()}
 \paragraph{Overview}
-The \texttt{open()} syscall overwrites the UserProcess imlementation to handle packets. This is handled by the recieve thread. The thread will only open packets if the state is \texttt{ESTABLISHED}.
+The \texttt{open()} syscall overwrites the UserProcess implementation to handle packets. This is handled by the receive thread. The thread will only open packets if the state is \texttt{ESTABLISHED}.
+
+\noindent Pseudocode:
+
+\begin{lstlisting}
+int open(fileDescriptor) {
+	if s.state == ESTABLISHED {
+		if (OPENFILE) {
+			fileSystem.open(fileDescriptor);
+		} 
+	} else return -1;
+}
+\end{lstlisting}
+
 \subsection{close()}
 \paragraph{Overview}
 The \texttt{close()} syscall extends the existing implementation to handle sockets and is serviced by the \texttt{receive} thread. It begins by checking the state of the socket; if the socket is in state \texttt{ESTABLISHED} and the outgoing window is empty, it will send a \texttt{FIN} packet to the other end and set the socket state to \texttt{CLOSING}. 
 
 If there are still pending packets in the outgoing window, \texttt{close()} sends an \texttt{STP} packet to the other end and sets the socket state to \texttt{STP\_SENT}. Attempting to close a socket that is not in \texttt{ESTABLISHED} returns -1.
 
-\pagebreak
 
 \noindent Pseudocode:
 
