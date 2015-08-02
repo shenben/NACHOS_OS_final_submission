@@ -25,15 +25,13 @@
 \paragraph{Overview}
 The socket object keeps track of all state associated with socket operations, including the TCP state machine and the mapped ports, as well as the associated \texttt{FileObject} file descriptor.
 
-
-\subsubsection{Send and receive buffers}
-
 \subsubsection{TCP state machine}
 
 The socket object contains a TCP state machine implementing the seven TCP states and the transitions between them, which occur based on syscalls, timer events or the receipt of TCP-flagged packets, such as \texttt{ACK} or \texttt{STP}.
 
 \subsection{Client object}
-The client is the person associated with a specific socket.
+The client object is maintained by the server and encapsulates a client connection to the server, including its associated socket and other server-side state.
+
 \subsection{Sliding window}
 \paragraph{Overview}
 The sliding window has a fixed size of 16 packets, and then the connection must wait for an acknowledgment.This works for both directions of traffic. These rules apply for multiple connections. This means there will be a limit on the receive buffer. 
@@ -45,7 +43,7 @@ The \texttt{connect()} syscall takes as arguments the host address and the port 
 
 At this point, the socket blocks its handler thread until it receives a SYN/ACK interrupt from the network layer. Alternatively, a timeout from the alarm clock can break the code (how?). Once the \texttt{SYN/ACK} has arrived, \texttt{s.state} is set to \texttt{ESTABLISHED} and interrupts are re-enabled. At this point, the connection has been successfully opened and the function returns the integer value of socket's associated file descriptor. \\
 
-
+\pagebreak
 \noindent Pseudocode:
 
 \begin{lstlisting}
@@ -54,7 +52,8 @@ int connect(host, port){
 	assign s a free port in (0,127)
 	s.state = SYN_SENT
 	send SYN packet
-	block until SYN/ACK recv'd // timeout breaks this?
+	// timeout breaks this?
+	block until SYN/ACK recv'd 
 	s.state = ESTABLISHED
 	return s.fileDescriptor
 }
@@ -115,7 +114,7 @@ The \texttt{write()} syscall extends the implementation from phase 2 with specia
 int write(fileDescriptor, buffer, count){
 	...
 	// no partial writes
-	if socket is ESTABLISHED and the write buffer has room
+	if s.state == ESTABLISHED and write buffer has room
 		write to the outgoing buffer
 		//post office handles packet creation
 	...
@@ -124,6 +123,8 @@ int write(fileDescriptor, buffer, count){
 \subsection{open()}
 \paragraph{Overview}
 The \texttt{open()} syscall overwrites the UserProcess implementation to handle packets. This is handled by the receive thread. The thread will only open packets if the state is \texttt{ESTABLISHED}.
+
+\pagebreak
 
 \noindent Pseudocode:
 
@@ -192,8 +193,6 @@ In each loop iteration, the client first reads pending user input into \\ \textt
 
 If there is no user input pending, then the client performs a \texttt{read} operation on the socket, filling \texttt{incomingMessage} with data starting from the end of the existing data, up to the end of the buffer. After the read completes, the client loops through \texttt{incomingMessage}, copying data into \texttt{temp} up to each \textbackslash n character, moving the data in \texttt{incomingMessage} to the beginning of the buffer and printing the contents of \texttt{temp} to the screen. \\
 
-\pagebreak
-
 \noindent Pseudocode:
 
 \begin{lstlisting}
@@ -233,8 +232,6 @@ int main(serverAddress){
 The chat server maintains a single buffer, \texttt{temp}, of size equal to maximum number of allowed characters and runs in an indefinite loop. It immediately terminates upon input on \texttt{stdin}, returning 0 for success.
 
 Within the loop body, the server calls \texttt{accept()} on the supplied port and allocates a \texttt{client} object if there is a pending connection. It then iterates through its list of clients, reading from the clients' associated socket into the temporary buffer and copying that buffer into the client's \texttt{outgoingMessage} buffer. The server then iterates through \texttt{client.outgoingMessage}, copying and moving over newline-delimited character arrays (into \texttt{temp}) and performing \texttt{write()} operations on every client's socket.
-
-\pagebreak
 
 \noindent Pseudocode:
 
