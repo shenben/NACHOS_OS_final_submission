@@ -165,8 +165,15 @@ There are three primary threads responsible for the handling of network communic
 This \texttt{send} thread iterates through all of the existing socket's outgoing buffers and sends the data out as expected.
 \subsection{Receive thread}
 The \texttt{receive} thread iterates through all of the existing socket's incoming buffers and passes the data up.
+
 \subsection{Timeout thread}
 This thread works like waitUntil, where it loops through the existing sockets and checks for any that have lived past their timeout value. If they have, it closes that socket.
+
+\paragraph{Tickets}
+Sockets maintain a count of 'tickets,' which are initially set to some maximum value and are decremented by each pass of the timeout thread. Upon receipt of packet from the other end of a connection, the socket object resets its ticket count to the maximum.
+
+\paragraph{Synchronization}
+As the timeout thread is the only that accesses the ticket count, there is no need for synchronization. The timeout thread will disable interrupts, iterate through all of the socket objects, decrementing their ticket count and closing any sockets with 0 tickets.
 
 \section{Chat}
 \subsection{Client}
