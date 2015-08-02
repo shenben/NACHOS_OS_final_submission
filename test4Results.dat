@@ -1,0 +1,103 @@
+make[1]: Entering directory `/home/cse150-g14/proj3_work/proj3_work/nachos'
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/ThreadedKernel.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+make[1]: Warning: File `classes/nachos/threads/KThread.class' has modification time 0.0093 s in the future
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/RoundRobinScheduler.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Semaphore.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Condition.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/SynchList.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Condition2.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Communicator.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Rider.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/ElevatorController.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/PriorityScheduler.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/LotteryScheduler.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/threads/Boat.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/userprog/UserKernel.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/vm/VMKernel.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/vm/VMProcess.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/network/NetKernel.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/network/NetProcess.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+javac -classpath /home/cse150/autograder/proj4-test/classes:./classes -d ./classes -sourcepath . nachos/network/PostOffice.java
+Picked up _JAVA_OPTIONS: -Xms128m -Xmx512m
+Note: nachos/network/PostOffice.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+make[1]: warning:  Clock skew detected.  Your build may be incomplete.
+make[1]: Leaving directory `/home/cse150-g14/proj3_work/proj3_work/nachos'
+starting test net-101 6
+starting test net-103 5
+finished test net-101
+starting test net-105 4
+finished test net-103
+starting test net-201 3
+finished test net-105
+starting test net-203 2
+finished test net-201
+starting test net-301 1
+finished test net-203
+starting test net-403 0
+finished test net-301
+finished test net-403
+------------------------------------------------------------
+
+Running test net-101...
+connect/accept
+
+Test net-101 succeeds.
+------------------------------------------------------------
+
+Running test net-103...
+connect blocks until connected
+
+Test net-103 succeeds.
+------------------------------------------------------------
+
+Running test net-105...
+can make multiple simultaneous connections to same remote
+
+Test net-105 succeeds.
+------------------------------------------------------------
+
+Running test net-201...
+read/write work
+
+Test net-201 succeeds.
+------------------------------------------------------------
+
+Running test net-203...
+read returns queued data even after connection closed by remote
+
+Test net-203 succeeds.
+------------------------------------------------------------
+
+Running test net-301...
+dropping packets during connection establishment
+
+Test net-301 succeeds.
+------------------------------------------------------------
+
+Running test net-403...
+one-way bulk data transfer with dropped packets
+
+Test net-403 succeeds.
+--------------------------------------------------
+7/7 tests passed
+
+
+<<All tests passed.

@@ -1,0 +1,64 @@
+make[1]: Entering directory `/home/cse150-g14/proj3_work/proj3_work/nachos'
+make[1]: Nothing to be done for `studentclasses_helper'.
+make[1]: Leaving directory `/home/cse150-g14/proj3_work/proj3_work/nachos'
+starting test net-101 6
+starting test net-103 5
+finished test net-101
+starting test net-105 4
+finished test net-103
+starting test net-201 3
+finished test net-105
+starting test net-203 2
+finished test net-201
+starting test net-301 1
+finished test net-203
+starting test net-403 0
+finished test net-301
+finished test net-403
+------------------------------------------------------------
+
+Running test net-101...
+connect/accept
+
+Test net-101 succeeds.
+------------------------------------------------------------
+
+Running test net-103...
+connect blocks until connected
+
+Test net-103 succeeds.
+------------------------------------------------------------
+
+Running test net-105...
+can make multiple simultaneous connections to same remote
+
+Test net-105 succeeds.
+------------------------------------------------------------
+
+Running test net-201...
+read/write work
+
+Test net-201 succeeds.
+------------------------------------------------------------
+
+Running test net-203...
+read returns queued data even after connection closed by remote
+
+Test net-203 succeeds.
+------------------------------------------------------------
+
+Running test net-301...
+dropping packets during connection establishment
+
+Test net-301 succeeds.
+------------------------------------------------------------
+
+Running test net-403...
+one-way bulk data transfer with dropped packets
+
+Test net-403 succeeds.
+--------------------------------------------------
+7/7 tests passed
+
+
+<<All tests passed.
