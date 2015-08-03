@@ -135,9 +135,18 @@ public class NetProcess extends UserProcess {
 				descriptorManager.descriptor[fileDesc] = new OpenSocket(((NetKernel) kernel).postOffice.connect(host,port));
 				//FileRef.referenceFile(fileTable[fileDesc].getName());
 				descriptorManager.referenceFile(descriptorManager.descriptor[fileDesc].getName());
-			} catch (ClassCastException cce) {
+			}
+			catch (ClassCastException cce) {
 				Lib.assertNotReached("Error - kernel not of type NetKernel");
 			}
+			catch (NullPointerException npe) {
+				Lib.assertNotReached("Error - adding null socket");
+			}
+			catch (Exception allexcepts) {
+				Lib.assertNotReached("Error - generic exception caught");
+			}
+			
+			
 		}
 
 		return fileDesc;
